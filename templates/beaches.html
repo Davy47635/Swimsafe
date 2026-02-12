@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SwimSafe — Beaches</title>
+
+  <!-- Some layout ideas helped by ChatGPT and then edited by me. -->
+  <!-- Reference: MDN - HTML Forms & Tables (2025) -->
+
+  <style>
+    body{margin:0;font-family:system-ui,Arial;background:#f6f8fb;color:#111}
+    .container{max-width:980px;margin:28px auto;padding:0 16px}
+    nav{display:flex;gap:12px;margin-bottom:14px;font-size:14px}
+    nav a{color:#1f6feb;text-decoration:none}
+    nav a:hover{text-decoration:underline}
+    h1{margin:0 0 8px 0}
+    .muted{color:#667085}
+    .card{background:#fff;border:1px solid #e8edf3;border-radius:12px;padding:16px;margin-top:14px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .row>div{flex:1;min-width:220px}
+    label{display:block;font-size:13px;color:#667085;margin-bottom:6px}
+    input,select,button{width:100%;padding:10px 12px;border:1px solid #e8edf3;border-radius:8px}
+    button{background:#1f6feb;color:#fff;border-color:#1f6feb;font-weight:600;cursor:pointer}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:12px;border-top:1px solid #e8edf3;text-align:left}
+    th{background:#f9fbfd;color:#667085;font-size:13px;border-top:none}
+    tbody tr:hover{background:#fafcff}
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <nav>
+    <a href="{{ url_for('home') }}">Home</a>
+    <a href="{{ url_for('swimmer') }}">Swimmer</a>
+    <a href="{{ url_for('lifeguard') }}">Lifeguard</a>
+    <a href="{{ url_for('beaches') }}">Beaches</a>
+  </nav>
+
+  <h1>Beaches</h1>
+  <p class="muted">Search beaches by name and filter by county. Click a beach to view reports and issues.</p>
+
+  <section class="card">
+    <form method="get" action="{{ url_for('beaches') }}">
+      <div class="row">
+        <div>
+          <label for="q">Search by name</label>
+          <input id="q" name="q" value="{{ q }}" placeholder="e.g. Garretstown">
+        </div>
+        <div>
+          <label for="county">County</label>
+          <select id="county" name="county">
+            <option value="">All counties</option>
+            {% for c in counties %}
+              <option value="{{ c }}" {% if county == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="align-self:flex-end">
+          <button type="submit">Search</button>
+        </div>
+      </div>
+    </form>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Beach</th>
+          <th>County</th>
+          <th>Open</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in beaches %}
+          <tr>
+            <td>{{ b.name }}</td>
+            <td>{{ b.county or "—" }}</td>
+            <td><a href="{{ url_for('beach_detail', beach_id=b.id) }}">View</a></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="3" class="muted">No beaches found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+</div>
+</body>
+</html>

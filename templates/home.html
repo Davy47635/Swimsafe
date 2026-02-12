@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SwimSafe — Home</title>
+
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --text:#0b1220;
+      --muted:#64748b;
+      --line:#e6edf5;
+      --primary:#1f6feb;
+      --primary2:#1757bf;
+      --good:#16a34a;
+      --warn:#f59e0b;
+      --bad:#dc2626;
+      --shadow: 0 10px 30px rgba(2, 8, 23, 0.08);
+      --radius: 14px;
+      --max: 1100px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 10%, #eaf2ff 0%, var(--bg) 45%);
+      color: var(--text);
+    }
+
+    .wrap{max-width:var(--max); margin:0 auto; padding:24px 16px 56px;}
+    a{color:inherit}
+
+    /* Top bar */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:14px 16px;
+      background:rgba(255,255,255,0.75);
+      backdrop-filter: blur(10px);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 20px rgba(2,8,23,0.05);
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:800;
+      letter-spacing: -0.02em;
+    }
+    .logo{
+      width:34px; height:34px;
+      border-radius:10px;
+      background: linear-gradient(135deg, var(--primary), #22c55e);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
+    }
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      font-size:13px;
+      color: var(--muted);
+      background:#fff;
+      border:1px solid var(--line);
+      padding:8px 10px;
+      border-radius:999px;
+    }
+    .link{
+      font-size:13px;
+      color: var(--primary);
+      text-decoration:none;
+      font-weight:700;
+    }
+    .link:hover{ text-decoration: underline; }
+
+    /* Hero */
+    .hero{
+      margin-top:18px;
+      display:grid;
+      gap:16px;
+      grid-template-columns: 1.2fr 0.8fr;
+      align-items: stretch;
+    }
+    @media (max-width: 900px){
+      .hero{ grid-template-columns: 1fr; }
+    }
+
+    .hero-main{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:22px;
+      position:relative;
+      overflow:hidden;
+    }
+    .hero-main:before{
+      content:"";
+      position:absolute;
+      inset:-2px -2px auto auto;
+      width:260px; height:260px;
+      background: radial-gradient(circle at 30% 30%, rgba(31,111,235,0.25), rgba(34,197,94,0.10), transparent 70%);
+      transform: translate(60px, -60px);
+    }
+    .kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      font-weight:800;
+      color:#0f172a;
+      background:#eef6ff;
+      border:1px solid #dbeafe;
+      padding:6px 10px;
+      border-radius:999px;
+    }
+    .hero-title{
+      margin:12px 0 8px;
+      font-size:34px;
+      line-height:1.1;
+      letter-spacing:-0.03em;
+    }
+    .hero-sub{
+      margin:0 0 16px;
+      color: var(--muted);
+      font-size:15px;
+      max-width: 62ch;
+    }
+    .cta-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      border-radius: 12px;
+      border:1px solid var(--primary);
+      background: var(--primary);
+      color:#fff;
+      font-weight:800;
+      padding:10px 14px;
+      text-decoration:none;
+      cursor:pointer;
+    }
+    .btn:hover{ background: var(--primary2); border-color: var(--primary2); }
+    .btn.secondary{
+      background:#fff;
+      color: var(--primary);
+      border-color: var(--line);
+    }
+    .btn.secondary:hover{ border-color: var(--primary); }
+
+    .hero-side{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .stat{
+      border:1px solid var(--line);
+      border-radius: 12px;
+      padding:12px;
+      background: #fbfdff;
+    }
+    .stat b{display:block; font-size:14px; margin-bottom:6px;}
+    .stat p{margin:0; color:var(--muted); font-size:13px;}
+    .badge{
+      display:inline-flex;
+      gap:6px;
+      align-items:center;
+      font-size:12px;
+      font-weight:800;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      color: var(--muted);
+    }
+    .dot{width:8px; height:8px; border-radius:99px; background: var(--good);}
+
+    /* Role cards */
+    .grid{
+      margin-top:16px;
+      display:grid;
+      gap:16px;
+      grid-template-columns: 1fr 1fr;
+    }
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+    .card{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:18px;
+    }
+    .card h2{
+      margin:0 0 6px;
+      font-size:18px;
+      letter-spacing:-0.01em;
+    }
+    .card p{
+      margin:0 0 12px;
+      color:var(--muted);
+      font-size:14px;
+    }
+    .list{
+      margin:0 0 14px;
+      padding:0;
+      list-style:none;
+      display:grid;
+      gap:8px;
+    }
+    .list li{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      color:#0f172a;
+      font-size:13px;
+    }
+    .tick{
+      width:18px;
+      height:18px;
+      border-radius:6px;
+      background:#eafff3;
+      border:1px solid #bbf7d0;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      color: var(--good);
+      flex: 0 0 18px;
+      margin-top:1px;
+    }
+
+    /* How it works strip */
+    .strip{
+      margin-top:16px;
+      background: #0b1220;
+      color:#fff;
+      border-radius: var(--radius);
+      padding:16px;
+      display:grid;
+      gap:12px;
+      grid-template-columns: repeat(3, 1fr);
+      box-shadow: var(--shadow);
+    }
+    @media (max-width: 900px){
+      .strip{ grid-template-columns: 1fr; }
+    }
+    .step{
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding:12px;
+      background: rgba(255,255,255,0.04);
+    }
+    .step b{display:block; margin-bottom:6px;}
+    .step p{margin:0; color: rgba(255,255,255,0.75); font-size:13px;}
+
+    /* Footer */
+    .foot{
+      margin-top:18px;
+      color:var(--muted);
+      font-size:12px;
+      text-align:center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>SwimSafe</div>
+      </div>
+
+      <div class="top-actions">
+        {% if role %}
+          <span class="pill">Logged in as <b style="color:#0f172a">{{ role }}</b></span>
+          <a class="link" href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+          <a class="link" href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-main">
+        <span class="kicker">🌊 Sea safety hub • Reports + issues + marine API</span>
+        <h1 class="hero-title">Know the conditions. Decide safely.</h1>
+        <p class="hero-sub">
+          SwimSafe helps swimmers check recent lifeguard reports and helps lifeguards record official conditions,
+          review hazards, and use live marine data to support decisions.
+        </p>
+
+        <div class="cta-row">
+          <a class="btn" href="{{ url_for('beaches') }}">Browse Beaches</a>
+
+          {% if role == "lifeguard" %}
+            <a class="btn secondary" href="{{ url_for('lifeguard') }}">Open Lifeguard Dashboard</a>
+          {% elif role == "swimmer" %}
+            <a class="btn secondary" href="{{ url_for('swimmer') }}">Open Swimmer Page</a>
+          {% else %}
+            <a class="btn secondary" href="{{ url_for('login') }}">Login to Continue</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <aside class="hero-side">
+        <div class="badge"><span class="dot"></span> Live API supported (Stormglass)</div>
+
+        <div class="stat">
+          <b>What you can do here</b>
+          <p>View beaches, see recent reports, submit hazards, and (lifeguards) publish official sea conditions.</p>
+        </div>
+
+        <div class="stat">
+          <b>System rules</b>
+          <p>Swimmers can view + submit issues. Lifeguards can create/edit/delete reports and resolve issues.</p>
+        </div>
+
+        <div class="stat">
+          <b>Trust</b>
+          <p>API data assists decision-making but never replaces lifeguard judgement.</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Swimmer</h2>
+        <p>Check safety info fast before entering the water.</p>
+
+        <ul class="list">
+          <li><span class="tick">✓</span> Filter recent official sea reports by beach</li>
+          <li><span class="tick">✓</span> View beach detail pages with latest report history</li>
+          <li><span class="tick">✓</span> Submit hazards/issues (rip currents, rocks, jellyfish, etc.)</li>
+        </ul>
+
+        <a class="btn" href="{{ url_for('swimmer') }}">Go to Swimmer Page</a>
+      </div>
+
+      <div class="card">
+        <h2>Lifeguard</h2>
+        <p>Publish official conditions and manage swimmer reports.</p>
+
+        <ul class="list">
+          <li><span class="tick">✓</span> Add, edit, and delete official sea reports</li>
+          <li><span class="tick">✓</span> Review & resolve swimmer-submitted issues</li>
+          <li><span class="tick">✓</span> Load live marine conditions (waves, wind, swell)</li>
+        </ul>
+
+        <a class="btn" href="{{ url_for('lifeguard') }}">Go to Lifeguard Dashboard</a>
+      </div>
+    </section>
+
+    <section class="strip">
+      <div class="step">
+        <b>1) Pick a beach</b>
+        <p>Browse the directory and open a beach page to see reports and issues.</p>
+      </div>
+      <div class="step">
+        <b>2) Check conditions</b>
+        <p>Use official lifeguard reports first. API data is optional support.</p>
+      </div>
+      <div class="step">
+        <b>3) Report hazards</b>
+        <p>Swimmers submit issues; lifeguards review and resolve them.</p>
+      </div>
+    </section>
+
+    <div class="foot">
+      SwimSafe — educational project. Marine API data availability varies by location and time.
+    </div>
+
+  </div>
+</body>
+</html>
+
+

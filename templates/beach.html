@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SwimSafe — {{ beach.name }}</title>
+  <style>
+    body{margin:0; font-family:system-ui, Arial; background:#f6f8fb; color:#111;}
+    .wrap{max-width:980px; margin:28px auto; padding:0 16px;}
+    nav{display:flex; gap:12px; margin-bottom:16px; font-size:14px}
+    nav a{color:#1f6feb; text-decoration:none}
+    nav a:hover{text-decoration:underline}
+    .card{background:#fff; border:1px solid #e8edf3; border-radius:12px; padding:16px; margin-bottom:16px;}
+    table{width:100%; border-collapse:collapse;}
+    th,td{padding:12px; border-top:1px solid #e8edf3; vertical-align:top;}
+    th{background:#f9fbfd; text-align:left; color:#667085; border-top:none;}
+    .muted{color:#667085;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <nav>
+      <a href="{{ url_for('home') }}">Home</a>
+      <a href="{{ url_for('swimmer') }}">Swimmer</a>
+      {% if role == "lifeguard" %}
+        <a href="{{ url_for('lifeguard') }}">Lifeguard</a>
+      {% endif %}
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+
+    <h1>{{ beach.name }}{% if beach.county %} ({{ beach.county }}){% endif %}</h1>
+    <p class="muted">This page shows the latest reports and any unresolved swimmer issues for this beach.</p>
+
+    <div class="card">
+      <h2>Sea Reports</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Tide</th>
+            <th>Temp °C</th>
+            <th>Flag</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in reports %}
+            <tr>
+              <td>{{ r.reported_at.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td>{{ r.tide or "—" }}</td>
+              <td>{{ r.temp_c if r.temp_c is not none else "—" }}</td>
+              <td>{{ r.flag_status or "—" }}</td>
+              <td>{{ r.notes or "" }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5" class="muted">No reports yet for this beach.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Unresolved Swimmer Issues</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i in open_issues %}
+            <tr>
+              <td>{{ i.submitted_at.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td>{{ i.issue_type or "—" }}</td>
+              <td>{{ i.description or "" }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="3" class="muted">No unresolved issues for this beach.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</body>
+</html>

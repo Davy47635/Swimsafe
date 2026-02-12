@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SwimSafe — Lifeguard Dashboard</title>
+
+  <!-- Layout originally designed by me, with structure ideas supported by ChatGPT -->
+  <!-- References: MDN Flexbox, W3Schools Tables & Forms (2025) -->
+
+  <style>
+    :root{
+      --bg:#f6f8fb; --card:#fff; --line:#e8edf3; --text:#111;
+      --muted:#667085; --btn:#1f6feb; --danger:#dc2626;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .container{
+      max-width:1100px;
+      margin:32px auto;
+      padding:0 16px;
+    }
+
+    nav{
+      display:flex;
+      gap:16px;
+      margin-bottom:16px;
+      font-size:14px;
+    }
+    nav a{
+      color:var(--btn);
+      text-decoration:none;
+    }
+    nav a:hover{text-decoration:underline}
+
+    h1{margin-bottom:4px}
+    .muted{color:var(--muted)}
+
+    .grid{
+      display:grid;
+      gap:16px;
+    }
+    @media(min-width:900px){
+      .grid-2{grid-template-columns:1fr 1fr;}
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:16px;
+    }
+    .card h2{
+      margin-top:0;
+      margin-bottom:12px;
+      font-size:18px;
+    }
+
+    label{
+      display:block;
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    select,input,textarea{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      margin-bottom:12px;
+    }
+    textarea{resize:vertical}
+
+    button{
+      padding:8px 14px;
+      border-radius:8px;
+      border:1px solid var(--btn);
+      background:var(--btn);
+      color:#fff;
+      cursor:pointer;
+      font-weight:600;
+    }
+    button.danger{
+      background:var(--danger);
+      border-color:var(--danger);
+    }
+    button.secondary{
+      background:#fff;
+      color:var(--btn);
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:8px;
+    }
+    th,td{
+      padding:10px;
+      border-top:1px solid var(--line);
+      text-align:left;
+      vertical-align:top;
+    }
+    th{
+      background:#f9fbfd;
+      font-size:13px;
+      color:var(--muted);
+      border-top:none;
+    }
+
+    .flash{
+      margin:12px 0;
+      padding:10px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      background:#fff;
+    }
+
+    /* ---------- ADDED (visual polish + API assist panel) ---------- */
+    .card{ box-shadow: 0 1px 0 rgba(16,24,40,.03), 0 10px 20px rgba(16,24,40,.04); }
+    .card h2{ letter-spacing:-0.2px; }
+    .btn-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .assist{
+      margin-top:12px;
+      padding:12px;
+      border:1px dashed var(--line);
+      border-radius:12px;
+      background:#fbfdff;
+    }
+    .assist h3{
+      margin:0 0 8px 0;
+      font-size:14px;
+    }
+    .assist .kv{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:6px;
+      font-size:14px;
+      margin-bottom:10px;
+    }
+    .assist .hint{
+      font-size:12px;
+      color:var(--muted);
+      margin:6px 0 0 0;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      font-size:12px;
+      color:var(--muted);
+      margin-top:8px;
+    }
+    .pill strong{ color:var(--text); font-weight:700; }
+
+    /* ---------- ADDED (Safety advisory badge + box) ---------- */
+    .advisory{
+      margin-top:12px;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#fff;
+    }
+    .advisory-badge{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .advisory-badge.low{ background:#ecfdf3; border-color:#a7f3d0; color:#065f46; }
+    .advisory-badge.caution{ background:#fffbeb; border-color:#fde68a; color:#92400e; }
+    .advisory-badge.unsafe{ background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+    .advisory ul{ margin:8px 0 0 18px; }
+    .advisory li{ margin:4px 0; font-size:14px; }
+    /* -------------------------------------------------------------- */
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <nav>
+      <a href="{{ url_for('home') }}">Home</a>
+      <a href="{{ url_for('beaches') }}">Beaches</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+
+    <h1>Lifeguard Dashboard</h1>
+    <p class="muted">
+      Create and manage official sea reports. Review swimmer issues and view assisted API data.
+    </p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Top row -->
+    <div class="grid grid-2">
+
+      <!-- Add Sea Report -->
+      <section class="card">
+        <h2>Add Sea Report</h2>
+        <form method="post" action="{{ url_for('create_report') }}">
+          <label for="beach_id">Beach *</label>
+          <select id="beach_id" name="beach_id" required>
+            <option value="">-- select beach --</option>
+            {% for b in beaches %}
+              <option value="{{ b.id }}">{{ b.name }} ({{ b.county }})</option>
+            {% endfor %}
+          </select>
+
+          <label for="tide">Tide</label>
+          <select id="tide" name="tide">
+            <option value="">--</option>
+            <option>Low</option>
+            <option>Rising</option>
+            <option>High</option>
+            <option>Falling</option>
+          </select>
+
+          <label for="temp_c">Water Temperature (°C)</label>
+          <input id="temp_c" name="temp_c" type="number" step="0.1">
+
+          <label for="flag_status">Flag Status</label>
+          <select id="flag_status" name="flag_status">
+            <option value="">--</option>
+            <option>Green</option>
+            <option>Yellow</option>
+            <option>Red</option>
+            <option>No Flag</option>
+          </select>
+
+          <label for="notes">Notes</label>
+          <textarea id="notes" name="notes" rows="2" maxlength="255"></textarea>
+
+          <!-- ✅ ADDED: hidden field to send advisory into create_report() -->
+          <input type="hidden" id="advisory_level" name="advisory_level" value="">
+
+          <button type="submit">Save Report</button>
+        </form>
+      </section>
+
+      <!-- API Assisted Conditions -->
+      <section class="card">
+        <h2>Live Marine Conditions (API)</h2>
+
+        <form method="get" action="{{ url_for('lifeguard') }}">
+          <label for="api_beach_id">Choose Beach for API Data</label>
+          <select id="api_beach_id" name="beach_id" required>
+            <option value="">-- select beach --</option>
+            {% for b in beaches %}
+              <option value="{{ b.id }}" {% if selected_beach_id and selected_beach_id|int == b.id %}selected{% endif %}>
+                {{ b.name }} ({{ b.county }})
+              </option>
+            {% endfor %}
+          </select>
+          <button type="submit">Load API Data</button>
+        </form>
+
+        {% if api_data %}
+          <p><strong>Wave height:</strong> {{ api_data.wave_height if api_data.wave_height is not none else "—" }} m</p>
+          <p><strong>Wave direction:</strong> {{ api_data.wave_direction if api_data.wave_direction is not none else "—" }}°</p>
+          <p><strong>Wave period:</strong> {{ api_data.wave_period if api_data.wave_period is not none else "—" }} s</p>
+          <p><strong>Swell height:</strong> {{ api_data.swell_height if api_data.swell_height is not none else "—" }} m</p>
+          <p><strong>Swell direction:</strong> {{ api_data.swell_direction if api_data.swell_direction is not none else "—" }}°</p>
+          <p><strong>Wind speed:</strong> {{ api_data.wind_speed if api_data.wind_speed is not none else "—" }} m/s</p>
+          <p><strong>Wind direction:</strong> {{ api_data.wind_direction if api_data.wind_direction is not none else "—" }}°</p>
+          <p><strong>Water temperature:</strong> {{ api_data.water_temp if api_data.water_temp is not none else "—" }} °C</p>
+
+          {% if api_data.time %}
+            <p class="muted">API time: {{ api_data.time }}</p>
+          {% endif %}
+
+          <p class="muted">
+            API data assists decision-making but does not replace lifeguard judgement.
+          </p>
+
+          <!-- ✅ ADDED: Safety Advisory (uses advisory passed from app.py) -->
+          {% if advisory %}
+            <div class="advisory">
+              <div class="advisory-badge {{ advisory.level_class }}">
+                {{ advisory.level }}
+              </div>
+
+              {% if advisory.reasons and advisory.reasons|length > 0 %}
+                <ul>
+                  {% for reason in advisory.reasons %}
+                    <li>{{ reason }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+
+              <p class="muted" style="margin:10px 0 0 0; font-size:12px;">
+                Advisory is rule-based from API data only. Lifeguard judgement is always final.
+              </p>
+            </div>
+          {% endif %}
+          <!-- ✅ END ADDED -->
+
+          <!-- ---------- ADDED: API → Suggested Values + copy button (does NOT change your form) ---------- -->
+          <div class="assist"
+               id="apiAssist"
+               data-advisory-level="{{ advisory.level if advisory else '' }}"
+               data-selected-beach-id="{{ selected_beach_id or '' }}"
+               data-wave-height="{{ api_data.wave_height if api_data.wave_height is not none else '' }}"
+               data-wave-direction="{{ api_data.wave_direction if api_data.wave_direction is not none else '' }}"
+               data-wave-period="{{ api_data.wave_period if api_data.wave_period is not none else '' }}"
+               data-swell-height="{{ api_data.swell_height if api_data.swell_height is not none else '' }}"
+               data-swell-direction="{{ api_data.swell_direction if api_data.swell_direction is not none else '' }}"
+               data-wind-speed="{{ api_data.wind_speed if api_data.wind_speed is not none else '' }}"
+               data-wind-direction="{{ api_data.wind_direction if api_data.wind_direction is not none else '' }}"
+               data-water-temp="{{ api_data.water_temp if api_data.water_temp is not none else '' }}"
+               data-api-time="{{ api_data.time or '' }}">
+            <h3>API Assist (copy into report)</h3>
+
+            <div class="kv">
+              <div class="pill">
+                <strong>Suggested temp:</strong>
+                <span id="assistTemp">
+                  {{ api_data.water_temp if api_data.water_temp is not none else "—" }}°C
+                </span>
+              </div>
+
+              <div class="pill">
+                <strong>Suggested notes:</strong>
+                <span class="muted">Auto-generate a short summary from the API values</span>
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button type="button" id="btnUseApi">Use Suggested Values</button>
+              <button type="button" class="secondary" id="btnCopyNotes">Copy API Summary to Notes</button>
+            </div>
+
+            <p class="hint">
+              This only fills your existing form fields (Beach + Water Temperature + Notes). You can still edit before saving.
+            </p>
+          </div>
+          <!-- ------------------------------------------------------------------------------------------ -->
+
+        {% else %}
+          <p class="muted">Live marine data unavailable. Select a beach above (and make sure your API key is set).</p>
+
+          <!-- ---------- ADDED: placeholder assist panel so layout stays consistent ---------- -->
+          <div class="assist">
+            <h3>API Assist (copy into report)</h3>
+            <p class="muted" style="margin:0;">
+              Load API data for a beach to enable “Use Suggested Values”.
+            </p>
+          </div>
+          <!-- ------------------------------------------------------------------------------ -->
+        {% endif %}
+      </section>
+    </div>
+
+    <!-- Unresolved issues -->
+    <section class="card" style="margin-top:16px;">
+      <h2>Unresolved Swimmer Issues</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Beach</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Resolve</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for issue in issues %}
+            <tr>
+              <td>{{ issue.submitted_at.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td>{{ issue.beach.name }}</td>
+              <td>{{ issue.issue_type }}</td>
+              <td>{{ issue.description }}</td>
+              <td>
+                <form method="post" action="{{ url_for('resolve_issue', issue_id=issue.id) }}">
+                  <button type="submit">Resolve</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5" class="muted">No unresolved issues.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Recent reports -->
+    <section class="card" style="margin-top:16px;">
+      <h2>Recent Sea Reports</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Beach</th>
+            <th>Tide</th>
+            <th>Temp</th>
+            <th>Flag</th>
+            <th>Notes</th>
+            <th>Edit</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in reports %}
+            <tr>
+              <td>{{ r.reported_at.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td>{{ r.beach.name }}</td>
+              <td>{{ r.tide or "—" }}</td>
+              <td>{{ r.temp_c or "—" }}</td>
+              <td>{{ r.flag_status or "—" }}</td>
+              <td>{{ r.notes or "" }}</td>
+              <td>
+                <a href="{{ url_for('edit_report', report_id=r.id) }}">Edit</a>
+              </td>
+              <td>
+                <form method="post"
+                      action="{{ url_for('delete_report', report_id=r.id) }}"
+                      onsubmit="return confirm('Delete this report?');">
+                  <button type="submit" class="danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="8" class="muted">No reports yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+  </div>
+
+  <!-- ---------- ADDED: JS that copies API values into your existing form fields ---------- -->
+  <script>
+    (function () {
+      const assist = document.getElementById("apiAssist");
+      if (!assist) return;
+
+      const btnUseApi = document.getElementById("btnUseApi");
+      const btnCopyNotes = document.getElementById("btnCopyNotes");
+
+      function buildApiSummary() {
+        const d = assist.dataset;
+
+        const parts = [];
+        if (d.waveHeight) parts.push(`Wave: ${Number(d.waveHeight).toFixed(2)}m`);
+        if (d.waveDirection) parts.push(`Wave dir: ${Number(d.waveDirection).toFixed(0)}°`);
+        if (d.wavePeriod) parts.push(`Wave period: ${Number(d.wavePeriod).toFixed(1)}s`);
+        if (d.swellHeight) parts.push(`Swell: ${Number(d.swellHeight).toFixed(2)}m`);
+        if (d.swellDirection) parts.push(`Swell dir: ${Number(d.swellDirection).toFixed(0)}°`);
+        if (d.windSpeed) parts.push(`Wind: ${Number(d.windSpeed).toFixed(2)}m/s`);
+        if (d.windDirection) parts.push(`Wind dir: ${Number(d.windDirection).toFixed(0)}°`);
+        if (d.waterTemp) parts.push(`Water temp: ${Number(d.waterTemp).toFixed(1)}°C`);
+        if (d.apiTime) parts.push(`API time: ${d.apiTime}`);
+
+        if (parts.length === 0) return "";
+        return `API summary — ${parts.join(" | ")}`;
+      }
+
+      function setValueById(id, value) {
+        const el = document.getElementById(id);
+        if (!el) return false;
+        el.value = value;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+      }
+
+      function useSuggestedValues() {
+        const d = assist.dataset;
+
+        // 1) Match the Beach in "Add Sea Report" to the selected API beach
+        if (d.selectedBeachId) {
+          setValueById("beach_id", d.selectedBeachId);
+        }
+
+        // 2) Fill Water Temperature
+        if (d.waterTemp) {
+          setValueById("temp_c", Number(d.waterTemp).toFixed(1));
+        }
+
+        // ✅ ADDED: store advisory so create_report() can save it
+        if (d.advisoryLevel) {
+          setValueById("advisory_level", d.advisoryLevel);
+        }
+
+        // 3) Append a short API summary into Notes (without overwriting what they already typed)
+        const notesEl = document.getElementById("notes");
+        const summary = buildApiSummary();
+        if (notesEl && summary) {
+          const current = (notesEl.value || "").trim();
+          if (!current) notesEl.value = summary;
+          else if (!current.includes("API summary —")) notesEl.value = current + "\n" + summary;
+          notesEl.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }
+
+      function copyApiSummaryOnly() {
+        const notesEl = document.getElementById("notes");
+        const summary = buildApiSummary();
+        if (!notesEl || !summary) return;
+
+        const current = (notesEl.value || "").trim();
+        if (!current) notesEl.value = summary;
+        else if (!current.includes("API summary —")) notesEl.value = current + "\n" + summary;
+
+        notesEl.dispatchEvent(new Event("input", { bubbles: true }));
+        notesEl.dispatchEvent(new Event("change", { bubbles: true }));
+
+        // Try to copy to clipboard as a bonus (won’t break if blocked)
+        try { navigator.clipboard && navigator.clipboard.writeText(summary); } catch (e) {}
+      }
+
+      if (btnUseApi) btnUseApi.addEventListener("click", useSuggestedValues);
+      if (btnCopyNotes) btnCopyNotes.addEventListener("click", copyApiSummaryOnly);
+    })();
+  </script>
+  <!-- ------------------------------------------------------------------------------- -->
+</body>
+</html>

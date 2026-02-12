@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SwimSafe — Swimmer</title>
+
+  <!-- Reference: MDN - Flexbox & Forms (2025) -->
+  <!-- Some layout ideas helped by ChatGPT and then edited by me. -->
+
+  <style>
+    body{margin:0;font-family:system-ui,Arial;background:#f6f8fb;color:#111}
+    .container{max-width:980px;margin:28px auto;padding:0 16px}
+    nav{display:flex;gap:12px;margin-bottom:14px;font-size:14px}
+    nav a{color:#1f6feb;text-decoration:none}
+    nav a:hover{text-decoration:underline}
+    h1{margin:0 0 6px 0}
+    .muted{color:#667085}
+    .card{background:#fff;border:1px solid #e8edf3;border-radius:12px;padding:16px;margin-top:14px}
+    label{display:block;font-size:13px;color:#667085;margin-bottom:6px}
+    select,textarea,button{width:100%;padding:10px 12px;border:1px solid #e8edf3;border-radius:8px}
+    button{background:#1f6feb;color:#fff;border-color:#1f6feb;font-weight:600;cursor:pointer}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .row>div{flex:1;min-width:220px}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:12px;border-top:1px solid #e8edf3;text-align:left;vertical-align:top}
+    th{background:#f9fbfd;color:#667085;font-size:13px;border-top:none}
+    tbody tr:hover{background:#fafcff}
+    .flash{margin:12px 0;padding:10px;border-radius:8px;border:1px solid #ccc;background:#fff}
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <nav>
+    <a href="{{ url_for('home') }}">Home</a>
+    <a href="{{ url_for('beaches') }}">Beaches</a>
+    <a href="{{ url_for('lifeguard') }}">Lifeguard</a>
+  </nav>
+
+  <h1>Swimmer Page</h1>
+  <p class="muted">View official sea reports and report issues you notice while swimming.</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for cat, msg in messages %}
+        <div class="flash">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <section class="card">
+    <h2 style="margin:0 0 10px 0">Filter reports by beach</h2>
+    <form method="get" action="{{ url_for('swimmer') }}">
+      <div class="row">
+        <div>
+          <label for="beach_id">Beach</label>
+          <select id="beach_id" name="beach_id">
+            <option value="">All beaches</option>
+            {% for b in beaches %}
+              <option value="{{ b.id }}" {% if selected_beach_id == (b.id|string) %}selected{% endif %}>
+                {{ b.name }}{% if b.county %} ({{ b.county }}){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="align-self:flex-end">
+          <button type="submit">Apply filter</button>
+        </div>
+      </div>
+    </form>
+    <p class="muted" style="margin:10px 0 0 0">
+      Tip: click any beach name in the table to view its full page.
+    </p>
+  </section>
+
+  <section class="card">
+    <h2 style="margin:0 0 10px 0">Report an issue</h2>
+    <form method="post" action="{{ url_for('create_issue') }}">
+      <div class="row">
+        <div>
+          <label for="issue_beach_id">Beach *</label>
+          <select id="issue_beach_id" name="issue_beach_id" required>
+            <option value="">-- Select beach --</option>
+            {% for b in beaches %}
+              <option value="{{ b.id }}">{{ b.name }}{% if b.county %} ({{ b.county }}){% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="issue_type">Issue type *</label>
+          <select id="issue_type" name="issue_type" required>
+            <option value="">--</option>
+            <option>Jellyfish</option>
+            <option>Pollution / Debris</option>
+            <option>Strong Current / Rip</option>
+            <option>Poor Visibility</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+
+      <label for="issue_desc">Description *</label>
+      <textarea id="issue_desc" name="issue_desc" rows="2" maxlength="255" required></textarea>
+
+      <div style="margin-top:10px;">
+        <button type="submit">Submit issue</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2 style="margin:0 0 10px 0">Recent sea reports</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Beach</th>
+          <th>Tide</th>
+          <th>Temp °C</th>
+          <th>Flag</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reports %}
+          <tr>
+            <td>{{ r.reported_at.strftime("%Y-%m-%d %H:%M") }}</td>
+            <td><a href="{{ url_for('beach_detail', beach_id=r.beach.id) }}">{{ r.beach.name }}</a></td>
+            <td>{{ r.tide or "—" }}</td>
+            <td>{{ r.temp_c if r.temp_c is not none else "—" }}</td>
+            <td>{{ r.flag_status or "—" }}</td>
+            <td>{{ r.notes or "" }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="muted">No reports yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+</div>
+</body>
+</html>
+
+
+
+
