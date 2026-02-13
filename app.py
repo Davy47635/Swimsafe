@@ -313,6 +313,43 @@ def build_safety_advisory(api_data: dict):
     }
 
 
+# ---- Register (NEW) ----
+ALLOWED_ROLES = {"swimmer", "lifeguard"}
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+        role = request.form.get("role", "swimmer").strip().lower()
+
+        if not username or not password:
+            flash("Please complete all fields.", "error")
+            return redirect(url_for("register"))
+
+        if role not in ALLOWED_ROLES:
+            flash("Invalid account type selected.", "error")
+            return redirect(url_for("register"))
+
+        existing = User.query.filter_by(username=username).first()
+        if existing:
+            flash("Username already in use. Please choose another.", "error")
+            return redirect(url_for("register"))
+
+        try:
+            user = User(username=username, password=password, role=role)
+            db.session.add(user)
+            db.session.commit()
+            flash("Account created successfully. Please log in.", "success")
+            return redirect(url_for("login"))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error creating account: {e}", "error")
+            return redirect(url_for("register"))
+
+    return render_template("register.html")
+
+
 # ---- Auth ----
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -474,7 +511,7 @@ def upload_beach_photo(beach_id):
 # ---- Swimmer page (view/filter reports + submit issues) ----
 @app.route("/swimmer", methods=["GET"])
 def swimmer():
-    if not login_required():
+    if not login_required(role="swimmer"):
         return redirect(url_for("login"))
 
     beaches_list = Beach.query.order_by(Beach.name.asc()).all()
