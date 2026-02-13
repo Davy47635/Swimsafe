@@ -5,86 +5,654 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>SwimSafe — Beaches</title>
 
-  <!-- Some layout ideas helped by ChatGPT and then edited by me. -->
-  <!-- Reference: MDN - HTML Forms & Tables (2025) -->
-
   <style>
-    body{margin:0;font-family:system-ui,Arial;background:#f6f8fb;color:#111}
-    .container{max-width:980px;margin:28px auto;padding:0 16px}
-    nav{display:flex;gap:12px;margin-bottom:14px;font-size:14px}
-    nav a{color:#1f6feb;text-decoration:none}
-    nav a:hover{text-decoration:underline}
-    h1{margin:0 0 8px 0}
-    .muted{color:#667085}
-    .card{background:#fff;border:1px solid #e8edf3;border-radius:12px;padding:16px;margin-top:14px}
-    .row{display:flex;gap:12px;flex-wrap:wrap}
-    .row>div{flex:1;min-width:220px}
-    label{display:block;font-size:13px;color:#667085;margin-bottom:6px}
-    input,select,button{width:100%;padding:10px 12px;border:1px solid #e8edf3;border-radius:8px}
-    button{background:#1f6feb;color:#fff;border-color:#1f6feb;font-weight:600;cursor:pointer}
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{padding:12px;border-top:1px solid #e8edf3;text-align:left}
-    th{background:#f9fbfd;color:#667085;font-size:13px;border-top:none}
-    tbody tr:hover{background:#fafcff}
+    :root{
+      --bg0:#0a1426;
+      --bg1:#0b2a4a;
+      --bg2:#081225;
+
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.08);
+      --border: rgba(255,255,255,.12);
+
+      --text:#eaf2ff;
+      --muted:#bcd0f3;
+      --muted2:#8fb0e6;
+
+      --primary:#1f6feb;
+      --primary2:#4895ef;
+      --teal:#4cc9f0;
+      --mint:#80ffdb;
+
+      --success:#2dd4bf;
+      --warning:#ffd166;
+      --danger:#ff5d6c;
+
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --shadow2: 0 10px 30px rgba(0,0,0,.35);
+
+      --radius: 18px;
+      --radius2: 14px;
+
+      --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: var(--font);
+      color: var(--text);
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 700px at 10% 10%, rgba(76,201,240,.20), transparent 50%),
+        radial-gradient(1000px 650px at 90% 20%, rgba(128,255,219,.12), transparent 55%),
+        radial-gradient(900px 600px at 50% 100%, rgba(31,111,235,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
+    }
+
+    a{ color: inherit; text-decoration: none; }
+    .container{
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 18px 16px 28px;
+    }
+
+    /* Top bar (matches Home) */
+    .topbar{
+      position: sticky;
+      top:0;
+      z-index: 1000;
+      backdrop-filter: blur(14px);
+      background: rgba(8,18,37,.60);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .topbar-inner{
+      max-width: 1120px;
+      margin:0 auto;
+      padding: 12px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 180px;
+    }
+    .mark{
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--teal), var(--mint));
+      box-shadow: 0 12px 30px rgba(76,201,240,.22);
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+    }
+    .mark svg{ width: 20px; height: 20px; fill: rgba(8,18,37,.95); }
+    .brand-title{
+      display:flex;
+      flex-direction:column;
+      line-height:1.1;
+    }
+    .brand-title strong{ font-size: 14px; letter-spacing:.2px; }
+    .brand-title span{ font-size: 12px; color: var(--muted2); }
+
+    .nav{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+    .nav a{
+      font-size: 13px;
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: background .15s ease, border .15s ease, transform .12s ease;
+    }
+    .nav a:hover{
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.10);
+      transform: translateY(-1px);
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      white-space: nowrap;
+    }
+    .dot{
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--warning);
+      box-shadow: 0 0 0 4px rgba(255,209,102,.14);
+    }
+    .dot.success{ background: var(--success); box-shadow: 0 0 0 4px rgba(45,212,191,.14); }
+
+    /* Flash messages */
+    .flash-wrap{
+      margin: 14px 0 0;
+      display:grid;
+      gap: 10px;
+    }
+    .flash{
+      border-radius: 14px;
+      padding: 12px 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(7,18,37,.35);
+      display:flex;
+      gap: 10px;
+      align-items:flex-start;
+      box-shadow: var(--shadow2);
+    }
+    .flash .dot2{
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      margin-top: 4px;
+      flex: 0 0 auto;
+      background: var(--warning);
+      box-shadow: 0 0 0 4px rgba(255,209,102,.14);
+    }
+    .flash.success .dot2{
+      background: var(--success);
+      box-shadow: 0 0 0 4px rgba(45,212,191,.14);
+    }
+    .flash.error .dot2{
+      background: var(--danger);
+      box-shadow: 0 0 0 4px rgba(255,93,108,.14);
+    }
+    .flash .msg{
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    /* Page header */
+    .page-head{
+      margin-top: 18px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .page-head h1{
+      margin:0;
+      font-size: 30px;
+      letter-spacing:-0.6px;
+      line-height: 1.12;
+    }
+    .page-head p{
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      max-width: 65ch;
+    }
+
+    /* Layout */
+    .grid{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: 1fr .42fr;
+      gap: 16px;
+      align-items:start;
+    }
+    .card{
+      border-radius: var(--radius);
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+    }
+    .card-inner{ padding: 16px; }
+
+    /* Filters */
+    .filters{
+      display:grid;
+      gap: 12px;
+    }
+    label{
+      display:block;
+      font-size: 12px;
+      color: var(--muted2);
+      margin-bottom: 8px;
+      letter-spacing:.2px;
+    }
+    .field{
+      background: rgba(7,18,37,.45);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 12px 12px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      transition: border .2s ease, transform .15s ease, box-shadow .2s ease;
+    }
+    .field:focus-within{
+      border-color: rgba(76,201,240,.45);
+      box-shadow: 0 0 0 4px rgba(76,201,240,.16);
+      transform: translateY(-1px);
+    }
+    .field svg{
+      width: 18px; height: 18px;
+      fill: rgba(188,208,243,.85);
+      flex: 0 0 auto;
+    }
+    input, select{
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 14px;
+      font-family: var(--font);
+    }
+    select option{ color: #111; }
+
+    .btn-row{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      padding: 11px 14px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing:.2px;
+      border: 1px solid transparent;
+      cursor:pointer;
+      transition: transform .12s ease, filter .15s ease, box-shadow .15s ease, background .15s ease;
+      user-select: none;
+      white-space: nowrap;
+      text-decoration:none;
+    }
+    .btn-primary{
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      color: white;
+      box-shadow: 0 14px 28px rgba(31,111,235,.18);
+    }
+    .btn-primary:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+    .btn-primary:active{ transform: translateY(0); filter: brightness(.98); }
+
+    .btn-ghost{
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.10);
+      color: var(--text);
+    }
+    .btn-ghost:hover{ transform: translateY(-1px); background: rgba(255,255,255,.08); }
+
+    .meta{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .chip strong{ color: var(--text); }
+
+    /* Results list */
+    .results-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(8,18,37,.18);
+    }
+    .results-head h2{
+      margin:0;
+      font-size: 14px;
+      letter-spacing:.2px;
+    }
+    .results-head .small{
+      color: var(--muted2);
+      font-size: 12px;
+    }
+
+    .list{
+      padding: 10px 10px 12px;
+      display:grid;
+      gap: 10px;
+    }
+    .item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(7,18,37,.35);
+      transition: transform .12s ease, background .15s ease, border .15s ease;
+    }
+    .item:hover{
+      transform: translateY(-1px);
+      background: rgba(7,18,37,.45);
+      border-color: rgba(255,255,255,.14);
+    }
+    .item-left{
+      display:flex;
+      flex-direction:column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .name{
+      font-weight: 900;
+      letter-spacing:.2px;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .sub{
+      color: var(--muted);
+      font-size: 12px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .sub span{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .sub svg{ width: 14px; height: 14px; fill: rgba(188,208,243,.85); }
+
+    .item-right{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      flex: 0 0 auto;
+    }
+    .link{
+      padding: 9px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 800;
+      border: 1px solid rgba(76,201,240,.22);
+      background: rgba(76,201,240,.10);
+      color: var(--text);
+      transition: transform .12s ease, background .15s ease, border .15s ease;
+    }
+    .link:hover{
+      transform: translateY(-1px);
+      background: rgba(76,201,240,.14);
+      border-color: rgba(76,201,240,.28);
+    }
+
+    /* Side card */
+    .side h3{
+      margin:0 0 8px;
+      font-size: 14px;
+      letter-spacing:.2px;
+    }
+    .side p{
+      margin:0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .callouts{
+      margin-top: 12px;
+      display:grid;
+      gap: 10px;
+    }
+    .callout{
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(8,18,37,.35);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .callout strong{
+      display:block;
+      font-size: 12px;
+      color: var(--muted2);
+      margin-bottom: 6px;
+      letter-spacing:.2px;
+    }
+    .callout span{
+      display:block;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height:1.45;
+    }
+
+    .empty{
+      padding: 18px;
+      text-align:center;
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.55;
+    }
+
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      .brand{ min-width: auto; }
+    }
   </style>
 </head>
+
 <body>
-<div class="container">
 
-  <nav>
-    <a href="{{ url_for('home') }}">Home</a>
-    <a href="{{ url_for('swimmer') }}">Swimmer</a>
-    <a href="{{ url_for('lifeguard') }}">Lifeguard</a>
-    <a href="{{ url_for('beaches') }}">Beaches</a>
-  </nav>
-
-  <h1>Beaches</h1>
-  <p class="muted">Search beaches by name and filter by county. Click a beach to view reports and issues.</p>
-
-  <section class="card">
-    <form method="get" action="{{ url_for('beaches') }}">
-      <div class="row">
-        <div>
-          <label for="q">Search by name</label>
-          <input id="q" name="q" value="{{ q }}" placeholder="e.g. Garretstown">
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <!-- wave icon -->
+          <svg viewBox="0 0 24 24">
+            <path d="M3 16c1.5 0 2.3-.6 3.2-1.2.9-.6 1.9-1.3 3.8-1.3s2.9.7 3.8 1.3c.9.6 1.7 1.2 3.2 1.2s2.3-.6 3.2-1.2c.3-.2.7-.5 1.1-.7V16c-.9.2-1.5.6-2.1 1-.9.6-1.9 1.3-3.8 1.3s-2.9-.7-3.8-1.3c-.9-.6-1.7-1.2-3.2-1.2s-2.3.6-3.2 1.2c-.8.5-1.7 1.1-3.2 1.2V16z"/>
+            <path d="M3 11c1.5 0 2.3-.6 3.2-1.2.9-.6 1.9-1.3 3.8-1.3s2.9.7 3.8 1.3c.9.6 1.7 1.2 3.2 1.2s2.3-.6 3.2-1.2c.3-.2.7-.5 1.1-.7V11c-.9.2-1.5.6-2.1 1-.9.6-1.9 1.3-3.8 1.3s-2.9-.7-3.8-1.3c-.9-.6-1.7-1.2-3.2-1.2s-2.3.6-3.2 1.2C5.4 12.5 4.5 13 3 13.2V11z"/>
+          </svg>
         </div>
-        <div>
-          <label for="county">County</label>
-          <select id="county" name="county">
-            <option value="">All counties</option>
-            {% for c in counties %}
-              <option value="{{ c }}" {% if county == c %}selected{% endif %}>{{ c }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div style="align-self:flex-end">
-          <button type="submit">Search</button>
+        <div class="brand-title">
+          <strong>SwimSafe</strong>
+          <span>Beaches directory</span>
         </div>
       </div>
-    </form>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Beach</th>
-          <th>County</th>
-          <th>Open</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for b in beaches %}
-          <tr>
-            <td>{{ b.name }}</td>
-            <td>{{ b.county or "—" }}</td>
-            <td><a href="{{ url_for('beach_detail', beach_id=b.id) }}">View</a></td>
-          </tr>
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('beaches') }}">Beaches</a>
+
+        {% if role == "swimmer" %}
+          <a href="{{ url_for('swimmer') }}">Swimmer</a>
+        {% elif role == "lifeguard" %}
+          <a href="{{ url_for('lifeguard') }}">Lifeguard</a>
+        {% endif %}
+
+        {% if role %}
+          <span class="pill" title="Logged in status">
+            <span class="dot success" aria-hidden="true"></span>
+            Logged in as {{ role|capitalize }}
+          </span>
+          <a href="{{ url_for('logout') }}" class="pill" style="border-color: rgba(255,255,255,.14);">Logout</a>
         {% else %}
-          <tr><td colspan="3" class="muted">No beaches found.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
+          <a href="{{ url_for('login') }}" class="pill" style="border-color: rgba(255,255,255,.14);">Login</a>
+          <a href="{{ url_for('register') }}" class="pill" style="border-color: rgba(76,201,240,.25); background: rgba(76,201,240,.10);">Create account</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
 
-</div>
+  <main class="container">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-wrap" role="status" aria-live="polite">
+          {% for cat, msg in messages %}
+            <div class="flash {{ cat|lower }}">
+              <div class="dot2" aria-hidden="true"></div>
+              <div class="msg">{{ msg }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <section class="page-head">
+      <div>
+        <h1>Beaches</h1>
+        <p>Search by name, filter by county, and open a beach to view reports, issues, and photos.</p>
+      </div>
+      <div class="meta">
+        <span class="chip"><strong>{{ beaches|length }}</strong> results</span>
+        {% if county %}
+          <span class="chip">County: <strong>{{ county }}</strong></span>
+        {% else %}
+          <span class="chip">County: <strong>All</strong></span>
+        {% endif %}
+        {% if q %}
+          <span class="chip">Search: <strong>{{ q }}</strong></span>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="grid">
+
+      <!-- Main results -->
+      <section class="card">
+        <div class="results-head">
+          <h2>Directory results</h2>
+          <div class="small">
+            Click “Open” to view reports/issues for a beach.
+          </div>
+        </div>
+
+        <div class="list">
+          {% for b in beaches %}
+            <div class="item">
+              <div class="item-left">
+                <div class="name">{{ b.name }}</div>
+                <div class="sub">
+                  <span title="County">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7zm0 9.5c-1.4 0-2.5-1.1-2.5-2.5S10.6 6.5 12 6.5s2.5 1.1 2.5 2.5S13.4 11.5 12 11.5z"/></svg>
+                    {{ b.county or "—" }}
+                  </span>
+                  {% if b.latitude is not none and b.longitude is not none %}
+                    <span title="Coordinates">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm1 17.9V20h-2v-.1A8 8 0 014.1 13H4v-2h.1A8 8 0 0111 4.1V4h2v.1A8 8 0 0119.9 11H20v2h-.1A8 8 0 0113 19.9z"/></svg>
+                      Lat/Lng saved
+                    </span>
+                  {% else %}
+                    <span title="Coordinates">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm1 17.9V20h-2v-.1A8 8 0 014.1 13H4v-2h.1A8 8 0 0111 4.1V4h2v.1A8 8 0 0119.9 11H20v2h-.1A8 8 0 0113 19.9z"/></svg>
+                      Coordinates missing
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="item-right">
+                <a class="link" href="{{ url_for('beach_detail', beach_id=b.id) }}">Open</a>
+              </div>
+            </div>
+          {% else %}
+            <div class="empty">
+              <strong style="color: var(--text); display:block; font-size: 14px; margin-bottom: 6px;">No beaches found</strong>
+              Try clearing filters or switching county back to “All counties”.
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <!-- Filters / Tips -->
+      <aside class="card side">
+        <div class="card-inner">
+          <h3>Search & filters</h3>
+          <p>Use the filters to find a specific beach quickly. Results update when you submit the form.</p>
+
+          <form method="get" action="{{ url_for('beaches') }}" class="filters" style="margin-top: 12px;">
+            <div>
+              <label for="q">Beach name</label>
+              <div class="field">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2a8 8 0 105.3 14l4.2 4.2 1.4-1.4-4.2-4.2A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/></svg>
+                <input id="q" name="q" value="{{ q }}" placeholder="e.g. Garrettstown">
+              </div>
+            </div>
+
+            <div>
+              <label for="county">County</label>
+              <div class="field">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7zm0 9.5c-1.4 0-2.5-1.1-2.5-2.5S10.6 6.5 12 6.5s2.5 1.1 2.5 2.5S13.4 11.5 12 11.5z"/></svg>
+                <select id="county" name="county">
+                  <option value="">All counties</option>
+                  {% for c in counties %}
+                    <option value="{{ c }}" {% if county == c %}selected{% endif %}>{{ c }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn btn-primary" type="submit">Search</button>
+              <a class="btn btn-ghost" href="{{ url_for('beaches') }}">Clear</a>
+            </div>
+          </form>
+
+          <div class="callouts">
+            <div class="callout">
+              <strong>Tip</strong>
+              <span>Open a beach to see the latest reports, swimmer issues, and lifeguard photos.</span>
+            </div>
+            <div class="callout">
+              <strong>Role access</strong>
+              <span>Swimmers and lifeguards both have access to the beaches directory.</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+    </section>
+
+    <footer style="margin-top: 18px; padding: 14px 4px; color: rgba(188,208,243,.75); font-size: 12px; line-height:1.45;">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap: 10px;">
+        <div>SwimSafe • Final Year Project • Flask + PostgreSQL + Render</div>
+        <div style="display:flex; gap: 12px; flex-wrap:wrap;">
+          <a href="{{ url_for('home') }}" style="color: var(--muted);">Home</a>
+          <a href="{{ url_for('beaches') }}" style="color: var(--muted);">Beaches</a>
+          {% if role == "swimmer" %}
+            <a href="{{ url_for('swimmer') }}" style="color: var(--muted);">Swimmer</a>
+          {% elif role == "lifeguard" %}
+            <a href="{{ url_for('lifeguard') }}" style="color: var(--muted);">Lifeguard</a>
+          {% endif %}
+        </div>
+      </div>
+    </footer>
+
+  </main>
 </body>
 </html>
