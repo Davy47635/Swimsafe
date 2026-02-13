@@ -3,398 +3,648 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>SwimSafe — Home</title>
+  <title>SwimSafe — Sea Safety Hub</title>
+
+  <!--
+    Home page UI: professional landing layout + role-aware navigation.
+    Uses your existing Flask routes:
+      home, login, register, logout, beaches, swimmer, lifeguard
+    Expects app.py passes:
+      role=current_user_role()
+      (optional) username=session.get("username")  -> if you want, see note below
+  -->
 
   <style>
     :root{
-      --bg:#f6f8fb;
-      --card:#ffffff;
-      --text:#0b1220;
-      --muted:#64748b;
-      --line:#e6edf5;
-      --primary:#1f6feb;
-      --primary2:#1757bf;
-      --good:#16a34a;
-      --warn:#f59e0b;
-      --bad:#dc2626;
-      --shadow: 0 10px 30px rgba(2, 8, 23, 0.08);
-      --radius: 14px;
-      --max: 1100px;
+      --bg0:#0a1426;
+      --bg1:#0b2a4a;
+      --bg2:#081225;
+
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.08);
+      --border: rgba(255,255,255,.12);
+
+      --text:#eaf2ff;
+      --muted:#bcd0f3;
+      --muted2:#8fb0e6;
+
+      --primary:#1f6feb;     /* your current blue */
+      --primary2:#4895ef;    /* gradient partner */
+      --teal:#4cc9f0;
+      --mint:#80ffdb;
+
+      --success:#2dd4bf;
+      --warning:#ffd166;
+      --danger:#ff5d6c;
+
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --shadow2: 0 10px 30px rgba(0,0,0,.35);
+
+      --radius: 18px;
+      --radius2: 14px;
+
+      --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
 
-    *{box-sizing:border-box}
+    *{ box-sizing: border-box; }
     body{
       margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 10%, #eaf2ff 0%, var(--bg) 45%);
+      font-family: var(--font);
       color: var(--text);
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 700px at 10% 10%, rgba(76,201,240,.20), transparent 50%),
+        radial-gradient(1000px 650px at 90% 20%, rgba(128,255,219,.12), transparent 55%),
+        radial-gradient(900px 600px at 50% 100%, rgba(31,111,235,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
     }
 
-    .wrap{max-width:var(--max); margin:0 auto; padding:24px 16px 56px;}
-    a{color:inherit}
+    a{ color: inherit; text-decoration:none; }
+    .container{
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 18px 16px 26px;
+    }
 
     /* Top bar */
     .topbar{
+      position: sticky;
+      top:0;
+      z-index: 1000;
+      backdrop-filter: blur(14px);
+      background: rgba(8,18,37,.60);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .topbar-inner{
+      max-width: 1120px;
+      margin:0 auto;
+      padding: 12px 16px;
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:12px;
-      padding:14px 16px;
-      background:rgba(255,255,255,0.75);
-      backdrop-filter: blur(10px);
-      border:1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: 0 8px 20px rgba(2,8,23,0.05);
-      position: sticky;
-      top: 12px;
-      z-index: 10;
+      gap: 12px;
     }
     .brand{
-      display:flex; align-items:center; gap:10px;
-      font-weight:800;
-      letter-spacing: -0.02em;
-    }
-    .logo{
-      width:34px; height:34px;
-      border-radius:10px;
-      background: linear-gradient(135deg, var(--primary), #22c55e);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
-    }
-    .top-actions{
       display:flex;
       align-items:center;
-      gap:10px;
+      gap: 10px;
+      min-width: 200px;
+    }
+    .mark{
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--teal), var(--mint));
+      box-shadow: 0 12px 30px rgba(76,201,240,.22);
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+    }
+    .mark svg{ width: 20px; height: 20px; fill: rgba(8,18,37,.95); }
+    .brand-title{
+      display:flex;
+      flex-direction:column;
+      line-height:1.1;
+    }
+    .brand-title strong{ font-size: 14px; letter-spacing:.2px; }
+    .brand-title span{ font-size: 12px; color: var(--muted2); }
+
+    .nav{
+      display:flex;
+      align-items:center;
+      gap: 10px;
       flex-wrap: wrap;
       justify-content:flex-end;
     }
-    .pill{
-      font-size:13px;
+    .nav a{
+      font-size: 13px;
       color: var(--muted);
-      background:#fff;
-      border:1px solid var(--line);
-      padding:8px 10px;
-      border-radius:999px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: background .15s ease, border .15s ease, transform .12s ease;
     }
-    .link{
-      font-size:13px;
-      color: var(--primary);
-      text-decoration:none;
-      font-weight:700;
-    }
-    .link:hover{ text-decoration: underline; }
-
-    /* Hero */
-    .hero{
-      margin-top:18px;
-      display:grid;
-      gap:16px;
-      grid-template-columns: 1.2fr 0.8fr;
-      align-items: stretch;
-    }
-    @media (max-width: 900px){
-      .hero{ grid-template-columns: 1fr; }
+    .nav a:hover{
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.10);
+      transform: translateY(-1px);
     }
 
-    .hero-main{
-      background: var(--card);
-      border:1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding:22px;
-      position:relative;
-      overflow:hidden;
-    }
-    .hero-main:before{
-      content:"";
-      position:absolute;
-      inset:-2px -2px auto auto;
-      width:260px; height:260px;
-      background: radial-gradient(circle at 30% 30%, rgba(31,111,235,0.25), rgba(34,197,94,0.10), transparent 70%);
-      transform: translate(60px, -60px);
-    }
-    .kicker{
+    .pill{
       display:inline-flex;
       align-items:center;
-      gap:8px;
-      font-size:12px;
-      font-weight:800;
-      color:#0f172a;
-      background:#eef6ff;
-      border:1px solid #dbeafe;
-      padding:6px 10px;
-      border-radius:999px;
-    }
-    .hero-title{
-      margin:12px 0 8px;
-      font-size:34px;
-      line-height:1.1;
-      letter-spacing:-0.03em;
-    }
-    .hero-sub{
-      margin:0 0 16px;
+      gap: 8px;
+      font-size: 12px;
       color: var(--muted);
-      font-size:15px;
-      max-width: 62ch;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      white-space: nowrap;
     }
-    .cta-row{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
+    .dot{
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--warning);
+      box-shadow: 0 0 0 4px rgba(255,209,102,.14);
+    }
+    .dot.success{ background: var(--success); box-shadow: 0 0 0 4px rgba(45,212,191,.14); }
+    .dot.danger{ background: var(--danger); box-shadow: 0 0 0 4px rgba(255,93,108,.14); }
+
+    /* Layout grid */
+    .grid{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    /* Cards */
+    .card{
+      border-radius: var(--radius);
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+    }
+    .card-inner{
+      padding: 18px;
+    }
+    .card h2{
+      margin: 0 0 8px;
+      font-size: 30px;
+      letter-spacing: -0.6px;
+      line-height: 1.12;
+    }
+    .card p{
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .banner{
+      position: relative;
+      min-height: 240px;
+      background:
+        radial-gradient(800px 400px at 20% 10%, rgba(76,201,240,.22), transparent 55%),
+        radial-gradient(700px 400px at 80% 30%, rgba(128,255,219,.12), transparent 55%),
+        linear-gradient(135deg, rgba(31,111,235,.18), rgba(255,255,255,.03));
+    }
+    .banner::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.08));
+      pointer-events:none;
+    }
+    .banner .tag{
+      display:inline-flex;
       align-items:center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(8,18,37,.35);
+      backdrop-filter: blur(10px);
+      margin-bottom: 12px;
     }
+    .tag svg{ width: 15px; height: 15px; fill: var(--muted); }
+
+    .btns{
+      display:flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
     .btn{
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      gap:8px;
+      gap: 10px;
+      padding: 10px 14px;
       border-radius: 12px;
-      border:1px solid var(--primary);
-      background: var(--primary);
-      color:#fff;
-      font-weight:800;
-      padding:10px 14px;
-      text-decoration:none;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing:.2px;
+      border: 1px solid transparent;
       cursor:pointer;
+      transition: transform .12s ease, filter .15s ease, box-shadow .15s ease, background .15s ease;
+      user-select: none;
+      white-space: nowrap;
     }
-    .btn:hover{ background: var(--primary2); border-color: var(--primary2); }
-    .btn.secondary{
-      background:#fff;
-      color: var(--primary);
-      border-color: var(--line);
+    .btn-primary{
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      color: white;
+      box-shadow: 0 14px 28px rgba(31,111,235,.18);
     }
-    .btn.secondary:hover{ border-color: var(--primary); }
+    .btn-primary:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+    .btn-primary:active{ transform: translateY(0); filter: brightness(.98); }
 
-    .hero-side{
-      background: var(--card);
-      border:1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding:18px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
+    .btn-ghost{
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.10);
+      color: var(--text);
     }
-    .stat{
-      border:1px solid var(--line);
-      border-radius: 12px;
-      padding:12px;
-      background: #fbfdff;
+    .btn-ghost:hover{ transform: translateY(-1px); background: rgba(255,255,255,.08); }
+    .btn-danger{
+      background: rgba(255,93,108,.14);
+      border-color: rgba(255,93,108,.25);
+      color: #ffd9dd;
     }
-    .stat b{display:block; font-size:14px; margin-bottom:6px;}
-    .stat p{margin:0; color:var(--muted); font-size:13px;}
-    .badge{
-      display:inline-flex;
-      gap:6px;
-      align-items:center;
-      font-size:12px;
-      font-weight:800;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:#fff;
+    .btn-danger:hover{ transform: translateY(-1px); background: rgba(255,93,108,.18); }
+
+    .mini-grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .mini{
+      padding: 14px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: rgba(8,18,37,.20);
+    }
+    .mini h3{
+      margin: 0 0 6px;
+      font-size: 13px;
+      color: var(--text);
+      letter-spacing:.2px;
+    }
+    .mini p{
+      margin:0;
+      font-size: 12px;
       color: var(--muted);
+      line-height: 1.45;
     }
-    .dot{width:8px; height:8px; border-radius:99px; background: var(--good);}
+    .mini strong{
+      color: var(--text);
+      font-weight: 800;
+    }
 
-    /* Role cards */
-    .grid{
-      margin-top:16px;
+    /* Role cards row */
+    .role-row{
       display:grid;
-      gap:16px;
       grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
     }
-    @media (max-width: 900px){
-      .grid{ grid-template-columns: 1fr; }
-    }
-    .card{
-      background: var(--card);
-      border:1px solid var(--line);
+    .role-card{
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding:18px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
     }
-    .card h2{
-      margin:0 0 6px;
-      font-size:18px;
-      letter-spacing:-0.01em;
-    }
-    .card p{
-      margin:0 0 12px;
-      color:var(--muted);
-      font-size:14px;
-    }
-    .list{
-      margin:0 0 14px;
-      padding:0;
-      list-style:none;
-      display:grid;
-      gap:8px;
-    }
-    .list li{
+    .role-card .head{
+      padding: 16px 16px 12px;
       display:flex;
-      gap:10px;
       align-items:flex-start;
-      color:#0f172a;
-      font-size:13px;
+      justify-content:space-between;
+      gap: 10px;
     }
-    .tick{
-      width:18px;
-      height:18px;
-      border-radius:6px;
-      background:#eafff3;
-      border:1px solid #bbf7d0;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:900;
-      color: var(--good);
-      flex: 0 0 18px;
-      margin-top:1px;
+    .role-card .head h3{
+      margin:0;
+      font-size: 14px;
+      letter-spacing:.2px;
+    }
+    .role-card .head p{
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .role-card .icon{
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      display:grid;
+      place-items:center;
+      background: rgba(76,201,240,.12);
+      border: 1px solid rgba(76,201,240,.18);
+      flex: 0 0 auto;
+    }
+    .role-card .icon svg{
+      width: 22px; height: 22px;
+      fill: var(--teal);
+    }
+    .checks{
+      padding: 0 16px 14px;
+      list-style: none;
+      margin: 0;
+      display:grid;
+      gap: 8px;
+    }
+    .checks li{
+      display:flex;
+      gap: 10px;
+      align-items:flex-start;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .checks svg{
+      width: 18px; height: 18px;
+      fill: var(--success);
+      flex: 0 0 auto;
+      margin-top: 1px;
+    }
+    .role-card .actions{
+      padding: 12px 16px 16px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
-    /* How it works strip */
-    .strip{
-      margin-top:16px;
-      background: #0b1220;
-      color:#fff;
-      border-radius: var(--radius);
-      padding:16px;
+    /* How it works */
+    .how{
+      margin-top: 16px;
       display:grid;
-      gap:12px;
-      grid-template-columns: repeat(3, 1fr);
-      box-shadow: var(--shadow);
-    }
-    @media (max-width: 900px){
-      .strip{ grid-template-columns: 1fr; }
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
     }
     .step{
-      border:1px solid rgba(255,255,255,0.12);
-      border-radius: 12px;
-      padding:12px;
-      background: rgba(255,255,255,0.04);
+      border-radius: 14px;
+      padding: 14px;
+      background: rgba(8,18,37,.35);
+      border: 1px solid rgba(255,255,255,.08);
     }
-    .step b{display:block; margin-bottom:6px;}
-    .step p{margin:0; color: rgba(255,255,255,0.75); font-size:13px;}
+    .step strong{
+      display:block;
+      font-size: 12px;
+      color: var(--muted2);
+      margin-bottom: 6px;
+      letter-spacing:.2px;
+    }
+    .step p{
+      margin:0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height:1.45;
+    }
 
-    /* Footer */
-    .foot{
-      margin-top:18px;
-      color:var(--muted);
-      font-size:12px;
-      text-align:center;
+    /* Responsive */
+    @media (max-width: 920px){
+      .grid{ grid-template-columns: 1fr; }
+      .role-row{ grid-template-columns: 1fr; }
+      .how{ grid-template-columns: 1fr; }
+      .card h2{ font-size: 26px; }
+      .brand{ min-width: auto; }
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
 
-    <header class="topbar">
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="topbar-inner">
       <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div>SwimSafe</div>
+        <div class="mark" aria-hidden="true">
+          <!-- wave icon -->
+          <svg viewBox="0 0 24 24">
+            <path d="M3 16c1.5 0 2.3-.6 3.2-1.2.9-.6 1.9-1.3 3.8-1.3s2.9.7 3.8 1.3c.9.6 1.7 1.2 3.2 1.2s2.3-.6 3.2-1.2c.3-.2.7-.5 1.1-.7V16c-.9.2-1.5.6-2.1 1-.9.6-1.9 1.3-3.8 1.3s-2.9-.7-3.8-1.3c-.9-.6-1.7-1.2-3.2-1.2s-2.3.6-3.2 1.2c-.8.5-1.7 1.1-3.2 1.2V16z"/>
+            <path d="M3 11c1.5 0 2.3-.6 3.2-1.2.9-.6 1.9-1.3 3.8-1.3s2.9.7 3.8 1.3c.9.6 1.7 1.2 3.2 1.2s2.3-.6 3.2-1.2c.3-.2.7-.5 1.1-.7V11c-.9.2-1.5.6-2.1 1-.9.6-1.9 1.3-3.8 1.3s-2.9-.7-3.8-1.3c-.9-.6-1.7-1.2-3.2-1.2s-2.3.6-3.2 1.2C5.4 12.5 4.5 13 3 13.2V11z"/>
+          </svg>
+        </div>
+        <div class="brand-title">
+          <strong>SwimSafe</strong>
+          <span>Sea safety hub</span>
+        </div>
       </div>
 
-      <div class="top-actions">
-        {% if role %}
-          <span class="pill">Logged in as <b style="color:#0f172a">{{ role }}</b></span>
-          <a class="link" href="{{ url_for('logout') }}">Logout</a>
-        {% else %}
-          <a class="link" href="{{ url_for('login') }}">Login</a>
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="{{ url_for('beaches') }}">Beaches</a>
+
+        {% if role == "swimmer" %}
+          <a href="{{ url_for('swimmer') }}">Swimmer</a>
+        {% elif role == "lifeguard" %}
+          <a href="{{ url_for('lifeguard') }}">Lifeguard</a>
         {% endif %}
+
+        {% if role %}
+          <span class="pill" title="Logged in status">
+            <span class="dot success" aria-hidden="true"></span>
+            Logged in as {{ role|capitalize }}
+          </span>
+          <a href="{{ url_for('logout') }}" class="pill" style="border-color: rgba(255,255,255,.14);">Logout</a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="pill" style="border-color: rgba(255,255,255,.14);">Login</a>
+          <a href="{{ url_for('register') }}" class="pill" style="border-color: rgba(76,201,240,.25); background: rgba(76,201,240,.10);">Create account</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Main grid -->
+    <section class="grid">
+
+      <!-- Hero -->
+      <div class="card banner">
+        <div class="card-inner">
+          <div class="tag">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a9 9 0 100 18 9 9 0 000-18zm1 13h-2v-2h2v2zm0-4h-2V7h2v4z"/></svg>
+            Sea safety hub • Reports • Issues • Marine API
+          </div>
+
+          <h2>Know the conditions. Decide safely.</h2>
+          <p>
+            SwimSafe helps swimmers check official beach updates and supports lifeguards with reporting,
+            issue management, and optional marine conditions from Stormglass.
+          </p>
+
+          <div class="btns">
+            <a class="btn btn-primary" href="{{ url_for('beaches') }}">
+              Browse Beaches
+            </a>
+
+            {% if not role %}
+              <a class="btn btn-ghost" href="{{ url_for('login') }}">
+                Login to Continue
+              </a>
+            {% else %}
+              {% if role == "swimmer" %}
+                <a class="btn btn-ghost" href="{{ url_for('swimmer') }}">Go to Swimmer Page</a>
+              {% elif role == "lifeguard" %}
+                <a class="btn btn-ghost" href="{{ url_for('lifeguard') }}">Go to Lifeguard Dashboard</a>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- right-side mini cards under hero (matches your screenshot style) -->
+        <div class="mini-grid">
+          <div class="mini">
+            <h3>✅ Live API supported (Stormglass)</h3>
+            <p>Optional marine conditions can be loaded per beach to support decision-making.</p>
+          </div>
+          <div class="mini">
+            <h3>🧭 System rules</h3>
+            <p>
+              <strong>Swimmers</strong> can view reports and submit issues.
+              <strong>Lifeguards</strong> can publish official reports, add photos, and resolve issues.
+            </p>
+          </div>
+          <div class="mini">
+            <h3>🛟 Trust</h3>
+            <p>API data assists decision-making but never replaces lifeguard judgement.</p>
+          </div>
+        </div>
       </div>
-    </header>
 
-    <section class="hero">
-      <div class="hero-main">
-        <span class="kicker">🌊 Sea safety hub • Reports + issues + marine API</span>
-        <h1 class="hero-title">Know the conditions. Decide safely.</h1>
-        <p class="hero-sub">
-          SwimSafe helps swimmers check recent lifeguard reports and helps lifeguards record official conditions,
-          review hazards, and use live marine data to support decisions.
-        </p>
+      <!-- Side panel: quick access / status -->
+      <aside class="card">
+        <div class="card-inner">
+          <h3 style="margin:0 0 8px; font-size: 14px; letter-spacing:.2px;">Quick access</h3>
+          <p style="margin:0; color: var(--muted); font-size: 13px; line-height:1.55;">
+            Use the buttons below based on your role. Access is enforced by the server.
+          </p>
 
-        <div class="cta-row">
-          <a class="btn" href="{{ url_for('beaches') }}">Browse Beaches</a>
+          <div style="margin-top: 14px; display:grid; gap: 10px;">
+            <a class="btn btn-primary" href="{{ url_for('beaches') }}">Open Beaches Directory</a>
 
-          {% if role == "lifeguard" %}
-            <a class="btn secondary" href="{{ url_for('lifeguard') }}">Open Lifeguard Dashboard</a>
-          {% elif role == "swimmer" %}
-            <a class="btn secondary" href="{{ url_for('swimmer') }}">Open Swimmer Page</a>
+            {% if role == "swimmer" %}
+              <a class="btn btn-ghost" href="{{ url_for('swimmer') }}">Open Swimmer Tools</a>
+            {% elif role == "lifeguard" %}
+              <a class="btn btn-ghost" href="{{ url_for('lifeguard') }}">Open Lifeguard Tools</a>
+            {% else %}
+              <a class="btn btn-ghost" href="{{ url_for('login') }}">Login</a>
+              <a class="btn btn-ghost" href="{{ url_for('register') }}">Create Account</a>
+            {% endif %}
+
+            {% if role %}
+              <a class="btn btn-danger" href="{{ url_for('logout') }}">Logout</a>
+            {% endif %}
+          </div>
+
+          <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.08);">
+            {% if role %}
+              <span class="pill">
+                <span class="dot success" aria-hidden="true"></span>
+                Active session: {{ role|capitalize }}
+              </span>
+              <p style="margin:10px 0 0; color: var(--muted2); font-size: 12px; line-height:1.45;">
+                Tip: Try opening a page you don’t have permission for (e.g., lifeguard → swimmer) to see access control working.
+              </p>
+            {% else %}
+              <span class="pill">
+                <span class="dot" aria-hidden="true"></span>
+                Not logged in
+              </span>
+              <p style="margin:10px 0 0; color: var(--muted2); font-size: 12px; line-height:1.45;">
+                Create an account as a swimmer or lifeguard to unlock the correct dashboard.
+              </p>
+            {% endif %}
+          </div>
+        </div>
+      </aside>
+
+    </section>
+
+    <!-- Role cards -->
+    <section class="role-row" aria-label="Role options">
+      <!-- Swimmer -->
+      <div class="role-card">
+        <div class="head">
+          <div>
+            <h3>Swimmer</h3>
+            <p>Check safety info fast before entering the water.</p>
+          </div>
+          <div class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 18c2.5 0 3.8-1.1 5.1-2 1.2-.9 2.3-1.6 4.9-1.6s3.7.7 4.9 1.6c1.3.9 2.6 2 5.1 2v2c-3.2 0-4.9-1.3-6.3-2.3-1-.7-1.8-1.3-3.7-1.3s-2.7.6-3.7 1.3C7.9 20.7 6.2 22 3 22v-2zM8.5 9.5a3.5 3.5 0 117 0 3.5 3.5 0 01-7 0z"/></svg>
+          </div>
+        </div>
+
+        <ul class="checks">
+          <li><svg viewBox="0 0 24 24"><path d="M9 16.2l-3.5-3.5L4 14.2 9 19l11-11-1.5-1.5z"/></svg>Filter recent official sea reports by beach</li>
+          <li><svg viewBox="0 0 24 24"><path d="M9 16.2l-3.5-3.5L4 14.2 9 19l11-11-1.5-1.5z"/></svg>View beach detail pages with report history + photos</li>
+          <li><svg viewBox="0 0 24 24"><path d="M9 16.2l-3.5-3.5L4 14.2 9 19l11-11-1.5-1.5z"/></svg>Submit hazards/issues (rip currents, rocks, jellyfish, etc.)</li>
+        </ul>
+
+        <div class="actions">
+          {% if role == "swimmer" %}
+            <a class="btn btn-primary" href="{{ url_for('swimmer') }}">Go to Swimmer Page</a>
+          {% elif not role %}
+            <a class="btn btn-primary" href="{{ url_for('register') }}">Create Swimmer Account</a>
+            <a class="btn btn-ghost" href="{{ url_for('login') }}">Login</a>
           {% else %}
-            <a class="btn secondary" href="{{ url_for('login') }}">Login to Continue</a>
+            <a class="btn btn-ghost" href="{{ url_for('swimmer') }}" title="Access will be denied by role rules">
+              Swimmer Page (restricted)
+            </a>
           {% endif %}
         </div>
       </div>
 
-      <aside class="hero-side">
-        <div class="badge"><span class="dot"></span> Live API supported (Stormglass)</div>
-
-        <div class="stat">
-          <b>What you can do here</b>
-          <p>View beaches, see recent reports, submit hazards, and (lifeguards) publish official sea conditions.</p>
+      <!-- Lifeguard -->
+      <div class="role-card">
+        <div class="head">
+          <div>
+            <h3>Lifeguard</h3>
+            <p>Publish official conditions and manage swimmer reports.</p>
+          </div>
+          <div class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 2l9 4v6c0 5-3.8 9.7-9 10-5.2-.3-9-5-9-10V6l9-4zm0 6a3 3 0 100 6 3 3 0 000-6z"/></svg>
+          </div>
         </div>
 
-        <div class="stat">
-          <b>System rules</b>
-          <p>Swimmers can view + submit issues. Lifeguards can create/edit/delete reports and resolve issues.</p>
-        </div>
-
-        <div class="stat">
-          <b>Trust</b>
-          <p>API data assists decision-making but never replaces lifeguard judgement.</p>
-        </div>
-      </aside>
-    </section>
-
-    <section class="grid">
-      <div class="card">
-        <h2>Swimmer</h2>
-        <p>Check safety info fast before entering the water.</p>
-
-        <ul class="list">
-          <li><span class="tick">✓</span> Filter recent official sea reports by beach</li>
-          <li><span class="tick">✓</span> View beach detail pages with latest report history</li>
-          <li><span class="tick">✓</span> Submit hazards/issues (rip currents, rocks, jellyfish, etc.)</li>
+        <ul class="checks">
+          <li><svg viewBox="0 0 24 24"><path d="M9 16.2l-3.5-3.5L4 14.2 9 19l11-11-1.5-1.5z"/></svg>Add/edit/delete official sea reports</li>
+          <li><svg viewBox="0 0 24 24"><path d="M9 16.2l-3.5-3.5L4 14.2 9 19l11-11-1.5-1.5z"/></svg>Review and resolve swimmer-submitted issues</li>
+          <li><svg viewBox="0 0 24 24"><path d="M9 16.2l-3.5-3.5L4 14.2 9 19l11-11-1.5-1.5z"/></svg>Load optional marine conditions (waves, wind, swell) via API</li>
         </ul>
 
-        <a class="btn" href="{{ url_for('swimmer') }}">Go to Swimmer Page</a>
-      </div>
-
-      <div class="card">
-        <h2>Lifeguard</h2>
-        <p>Publish official conditions and manage swimmer reports.</p>
-
-        <ul class="list">
-          <li><span class="tick">✓</span> Add, edit, and delete official sea reports</li>
-          <li><span class="tick">✓</span> Review & resolve swimmer-submitted issues</li>
-          <li><span class="tick">✓</span> Load live marine conditions (waves, wind, swell)</li>
-        </ul>
-
-        <a class="btn" href="{{ url_for('lifeguard') }}">Go to Lifeguard Dashboard</a>
+        <div class="actions">
+          {% if role == "lifeguard" %}
+            <a class="btn btn-primary" href="{{ url_for('lifeguard') }}">Go to Lifeguard Dashboard</a>
+          {% elif not role %}
+            <a class="btn btn-primary" href="{{ url_for('register') }}">Create Lifeguard Account</a>
+            <a class="btn btn-ghost" href="{{ url_for('login') }}">Login</a>
+          {% else %}
+            <a class="btn btn-ghost" href="{{ url_for('lifeguard') }}" title="Access will be denied by role rules">
+              Lifeguard Dashboard (restricted)
+            </a>
+          {% endif %}
+        </div>
       </div>
     </section>
 
-    <section class="strip">
+    <!-- How it works -->
+    <section class="how" aria-label="How SwimSafe works">
       <div class="step">
-        <b>1) Pick a beach</b>
-        <p>Browse the directory and open a beach page to see reports and issues.</p>
+        <strong>1) Pick a beach</strong>
+        <p>Browse the directory and open a beach page to see reports, issues, and photos.</p>
       </div>
       <div class="step">
-        <b>2) Check conditions</b>
-        <p>Use official lifeguard reports first. API data is optional support.</p>
+        <strong>2) Check conditions</strong>
+        <p>Use official reports first. API data is optional support, not the source of truth.</p>
       </div>
       <div class="step">
-        <b>3) Report hazards</b>
-        <p>Swimmers submit issues; lifeguards review and resolve them.</p>
+        <strong>3) Report hazards</strong>
+        <p>Swimmers submit issues; lifeguards review and resolve them to keep info current.</p>
       </div>
     </section>
 
-    <div class="foot">
-      SwimSafe — educational project. Marine API data availability varies by location and time.
-    </div>
+    <footer style="margin-top: 18px; padding: 14px 4px; color: rgba(188,208,243,.75); font-size: 12px; line-height:1.45;">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap: 10px;">
+        <div>SwimSafe • Final Year Project • Flask + PostgreSQL + Render</div>
+        <div style="display:flex; gap: 12px; flex-wrap:wrap;">
+          <a href="{{ url_for('beaches') }}" style="color: var(--muted);">Beaches</a>
+          {% if not role %}
+            <a href="{{ url_for('login') }}" style="color: var(--muted);">Login</a>
+            <a href="{{ url_for('register') }}" style="color: var(--muted);">Create account</a>
+          {% else %}
+            <a href="{{ url_for('logout') }}" style="color: var(--muted);">Logout</a>
+          {% endif %}
+        </div>
+      </div>
+    </footer>
 
-  </div>
+  </main>
 </body>
 </html>
 

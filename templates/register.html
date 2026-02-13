@@ -1,15 +1,16 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>SwimSafe — Login</title>
+  <title>SwimSafe • Create Account</title>
 
   <style>
     :root{
       --bg1:#071225;
       --bg2:#0b2a4a;
       --card:#0f1e35cc;
+      --cardSolid:#0f1e35;
       --text:#eaf2ff;
       --muted:#bcd0f3;
       --muted2:#8fb0e6;
@@ -17,26 +18,25 @@
       --primary2:#4895ef;
       --accent:#80ffdb;
       --danger:#ff5d6c;
-      --success:#2dd4bf;
       --warning:#ffd166;
-      --border: rgba(255,255,255,.12);
-      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --success:#2dd4bf;
+      --border:#284b7a;
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
       --radius: 18px;
+      --radius2: 14px;
       --ring: 0 0 0 4px rgba(76,201,240,.18);
       --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
 
     *{ box-sizing:border-box; }
-
     body{
       margin:0;
       font-family: var(--font);
       color: var(--text);
       min-height:100vh;
-      background:
-        radial-gradient(1100px 650px at 10% 10%, rgba(76,201,240,.25), transparent 50%),
-        radial-gradient(900px 600px at 90% 20%, rgba(128,255,219,.16), transparent 55%),
-        linear-gradient(180deg, var(--bg1), var(--bg2));
+      background: radial-gradient(1200px 700px at 10% 10%, rgba(76,201,240,.25), transparent 50%),
+                  radial-gradient(900px 600px at 90% 20%, rgba(128,255,219,.18), transparent 55%),
+                  linear-gradient(180deg, var(--bg1), var(--bg2));
       display:flex;
       align-items:center;
       justify-content:center;
@@ -44,7 +44,7 @@
     }
 
     .shell{
-      width:100%;
+      width: 100%;
       max-width: 980px;
       display:grid;
       grid-template-columns: 1.1fr .9fr;
@@ -52,18 +52,18 @@
       align-items: stretch;
     }
 
-    /* Left panel (branding / info) */
-    .panel{
+    /* Left panel */
+    .brand-panel{
       position: relative;
       border-radius: var(--radius);
       overflow:hidden;
       box-shadow: var(--shadow);
-      border: 1px solid var(--border);
       background: linear-gradient(135deg, rgba(76,201,240,.20), rgba(72,149,239,.10) 60%, rgba(128,255,219,.10));
+      border: 1px solid rgba(255,255,255,.10);
       padding: 26px;
       min-height: 560px;
     }
-    .panel::before{
+    .brand-panel::before{
       content:"";
       position:absolute;
       inset:-80px;
@@ -71,10 +71,10 @@
         radial-gradient(circle at 20% 30%, rgba(76,201,240,.35), transparent 40%),
         radial-gradient(circle at 70% 20%, rgba(128,255,219,.25), transparent 45%),
         radial-gradient(circle at 50% 80%, rgba(72,149,239,.25), transparent 50%);
-      filter: blur(22px);
+      filter: blur(20px);
       opacity:.9;
     }
-    .panel > *{ position:relative; z-index:1; }
+    .brand-panel > *{ position:relative; z-index:1; }
 
     .logo{
       display:flex;
@@ -114,10 +114,10 @@
       color: var(--muted);
       font-size: 15px;
       line-height: 1.55;
-      max-width: 46ch;
+      max-width: 44ch;
     }
 
-    .features{
+    .feature-list{
       margin: 22px 0 0;
       display:grid;
       gap: 12px;
@@ -162,11 +162,11 @@
       line-height: 1.45;
     }
 
-    /* Right panel (form card) */
+    /* Right panel - form */
     .card{
       border-radius: var(--radius);
       background: rgba(15,30,53,.72);
-      border: 1px solid var(--border);
+      border: 1px solid rgba(255,255,255,.10);
       box-shadow: var(--shadow);
       backdrop-filter: blur(12px);
       padding: 22px;
@@ -177,28 +177,20 @@
 
     .card-header{
       display:flex;
-      align-items:flex-start;
+      align-items:center;
       justify-content:space-between;
       gap: 12px;
-      margin-bottom: 10px;
+      margin-bottom: 14px;
     }
     .card-header h2{
       margin:0;
       font-size: 18px;
       letter-spacing:.2px;
     }
-    .hint{
-      color: var(--muted2);
+    .card-header .hint{
       font-size: 13px;
-      line-height:1.4;
-      text-align:right;
+      color: var(--muted2);
     }
-    .hint a{
-      color: var(--primary);
-      font-weight: 650;
-      text-decoration:none;
-    }
-    .hint a:hover{ text-decoration: underline; }
 
     .flash-wrap{
       margin: 10px 0 14px;
@@ -244,6 +236,12 @@
       flex: 1;
     }
 
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
     label{
       font-size: 12px;
       color: var(--muted);
@@ -273,7 +271,7 @@
       flex: 0 0 auto;
     }
 
-    input{
+    input, select{
       width:100%;
       background: transparent;
       border: none;
@@ -284,18 +282,87 @@
     }
     input::placeholder{ color: rgba(188,208,243,.55); }
 
-    .row{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 12px;
-      flex-wrap: wrap;
+    select{
+      appearance:none;
+      -webkit-appearance:none;
+      -moz-appearance:none;
+      cursor:pointer;
+    }
+    .select-wrap{
+      position: relative;
+      width: 100%;
+    }
+    .chev{
+      position:absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events:none;
+      opacity:.85;
+    }
+    .chev svg{ width: 18px; height: 18px; fill: rgba(188,208,243,.85); }
+
+    .role-cards{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
       margin-top: 2px;
     }
-    .row .small{
-      color: var(--muted2);
+    .role{
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(7,18,37,.35);
+      border: 1px solid rgba(255,255,255,.10);
+      cursor:pointer;
+      transition: transform .15s ease, border .2s ease, box-shadow .2s ease;
+      user-select:none;
+    }
+    .role:hover{
+      transform: translateY(-1px);
+      border-color: rgba(76,201,240,.35);
+    }
+    .role input{
+      display:none;
+    }
+    .role .top{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .role .name{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      font-weight: 600;
+      letter-spacing:.2px;
+      font-size: 14px;
+    }
+    .pill{
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(76,201,240,.12);
+      border: 1px solid rgba(76,201,240,.18);
+      color: var(--muted);
+    }
+    .role .desc{
+      margin: 8px 0 0;
+      color: var(--muted);
       font-size: 12px;
-      line-height: 1.4;
+      line-height: 1.45;
+    }
+    .role.selected{
+      border-color: rgba(76,201,240,.55);
+      box-shadow: var(--ring);
+      background: rgba(76,201,240,.08);
+    }
+
+    .actions{
+      margin-top: 6px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
     }
 
     .btn{
@@ -323,7 +390,7 @@
       filter: brightness(0.98);
     }
 
-    .footer{
+    .meta{
       margin-top: auto;
       padding-top: 14px;
       border-top: 1px solid rgba(255,255,255,.08);
@@ -333,18 +400,24 @@
       gap: 10px;
       flex-wrap:wrap;
     }
-    .footer a{
+    .meta a{
       color: var(--primary);
       text-decoration:none;
       font-weight: 600;
       font-size: 13px;
     }
-    .footer a:hover{ text-decoration: underline; }
-    .footer .tiny{
+    .meta a:hover{ text-decoration: underline; }
+    .meta .small{
       color: var(--muted);
       font-size: 12px;
       line-height:1.4;
-      margin:0;
+    }
+
+    .tiny{
+      font-size: 12px;
+      color: var(--muted2);
+      line-height: 1.4;
+      margin: 0;
     }
 
     /* Responsive */
@@ -353,10 +426,13 @@
         grid-template-columns: 1fr;
         max-width: 560px;
       }
-      .panel{ min-height: auto; }
+      .brand-panel{ min-height: auto; }
       .card{ min-height: auto; }
       .headline{ font-size: 30px; }
-      .hint{ text-align:left; }
+    }
+    @media (max-width: 520px){
+      .grid{ grid-template-columns: 1fr; }
+      .role-cards{ grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -365,7 +441,7 @@
   <div class="shell">
 
     <!-- Left: Brand / explanation panel -->
-    <section class="panel" aria-label="SwimSafe overview">
+    <section class="brand-panel" aria-label="SwimSafe overview">
       <div class="logo">
         <div class="mark" aria-hidden="true">
           <!-- wave icon -->
@@ -380,20 +456,20 @@
         </div>
       </div>
 
-      <h2 class="headline">Welcome back</h2>
+      <h2 class="headline">Create your account</h2>
       <p class="subtext">
-        Log in to access your role-based dashboard. Swimmers and lifeguards can view beach information,
-        while each role has its own dedicated features.
+        Choose the role that matches how you’ll use SwimSafe.
+        Your role controls which pages you can access: lifeguard tools, swimmer features, and shared beach info.
       </p>
 
-      <ul class="features">
+      <ul class="feature-list">
         <li class="feature">
           <div class="badge" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M12 2a9 9 0 100 18 9 9 0 000-18zm1 13h-2v-2h2v2zm0-4h-2V7h2v4z"/></svg>
           </div>
           <div>
             <h3>Role-based access</h3>
-            <p>Swimmers access swimmer tools, lifeguards access lifeguard tools — both can browse beaches.</p>
+            <p>Swimmers see swimmer tools; lifeguards see lifeguard tools. Both can view beaches.</p>
           </div>
         </li>
 
@@ -402,8 +478,8 @@
             <svg viewBox="0 0 24 24"><path d="M12 1l3 6 6 .9-4.5 4.4 1.1 6.3L12 16.9 6.4 18.6l1.1-6.3L3 7.9 9 7l3-6z"/></svg>
           </div>
           <div>
-            <h3>Beach conditions</h3>
-            <p>View reports, flags, photos, and optional API-based safety advisories per beach.</p>
+            <h3>Built for clarity</h3>
+            <p>Clean account setup with validation-friendly fields for reliable sign-up and login.</p>
           </div>
         </li>
 
@@ -412,80 +488,142 @@
             <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 109 9 9 9 0 00-9-9zm-1 13l-4-4 1.4-1.4L11 13.2l5.6-5.6L18 9z"/></svg>
           </div>
           <div>
-            <h3>Designed for clarity</h3>
-            <p>Clean UI and consistent navigation, suitable for an FYP demo and report screenshots.</p>
+            <h3>Safer by design</h3>
+            <p>Works well with hashed passwords and secure sessions (recommended for your FYP).</p>
           </div>
         </li>
       </ul>
     </section>
 
-    <!-- Right: Form card -->
-    <section class="card" aria-label="Login form">
+    <!-- Right: Form -->
+    <section class="card" aria-label="Create account form">
       <div class="card-header">
-        <div>
-          <h2>Log in</h2>
-          <p style="margin:6px 0 0; color: var(--muted); font-size: 13px; line-height:1.4;">
-            Use your SwimSafe account to continue.
-          </p>
-        </div>
-        <div class="hint">
-          New here?<br/>
-          <a href="{{ url_for('register') }}">Create account</a>
-        </div>
+        <h2>Sign up</h2>
+        <div class="hint">Already have one? <a href="/login" style="color:var(--primary); text-decoration:none; font-weight:650;">Log in</a></div>
       </div>
 
+      <!-- Flash messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           <div class="flash-wrap" role="status" aria-live="polite">
-            {% for cat, msg in messages %}
-              <div class="flash {{ cat|lower }}">
+            {% for category, message in messages %}
+              <div class="flash {{ category|lower }}">
                 <div class="dot" aria-hidden="true"></div>
-                <div class="msg">{{ msg }}</div>
+                <div class="msg">{{ message }}</div>
               </div>
             {% endfor %}
           </div>
         {% endif %}
       {% endwith %}
 
-      <form method="post" autocomplete="on">
-        <div>
-          <label for="username">Username</label>
-          <div class="field">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 10-5-5 5 5 0 005 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg>
-            <input id="username" name="username" placeholder="e.g. davidcarroll" required autofocus>
+      <form method="POST" action="/register" autocomplete="on">
+        <div class="grid">
+          <div>
+            <label for="username">Username</label>
+            <div class="field">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 10-5-5 5 5 0 005 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg>
+              <input id="username" name="username" type="text" placeholder="e.g. davidcarroll" required />
+            </div>
+          </div>
+
+          <div>
+            <label for="email">Email</label>
+            <div class="field">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm0 4l-8 5-8-5V6l8 5 8-5z"/></svg>
+              <input id="email" name="email" type="email" placeholder="you@example.com" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div>
+            <label for="password">Password</label>
+            <div class="field">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 8h-1V6a4 4 0 10-8 0v2H7a2 2 0 00-2 2v9a2 2 0 002 2h10a2 2 0 002-2v-9a2 2 0 00-2-2zm-7-2a2 2 0 114 0v2h-4V6zm3 10.7V18h-2v-1.3a2 2 0 111.9 0z"/></svg>
+              <input id="password" name="password" type="password" placeholder="Create a strong password" minlength="6" required />
+            </div>
+            <p class="tiny">Tip: use at least 6+ characters. (You can enforce stronger rules later.)</p>
+          </div>
+
+          <div>
+            <label for="roleSelect">Account type</label>
+            <!-- Hidden select (still sent to Flask), role cards update it -->
+            <div class="field">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l9 4v6c0 5-3.8 9.7-9 10-5.2-.3-9-5-9-10V6l9-4zm0 6a3 3 0 100 6 3 3 0 000-6z"/></svg>
+              <div class="select-wrap">
+                <select id="roleSelect" name="role" required>
+                  <option value="swimmer" selected>Swimmer</option>
+                  <option value="lifeguard">Lifeguard</option>
+                </select>
+                <span class="chev" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
         <div>
-          <label for="password">Password</label>
-          <div class="field">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 8h-1V6a4 4 0 10-8 0v2H7a2 2 0 00-2 2v9a2 2 0 002 2h10a2 2 0 002-2v-9a2 2 0 00-2-2zm-7-2a2 2 0 114 0v2h-4V6zm3 10.7V18h-2v-1.3a2 2 0 111.9 0z"/></svg>
-            <input id="password" name="password" type="password" placeholder="Your password" required>
-          </div>
+          <label>Quick role selection</label>
+          <div class="role-cards" id="roleCards">
+            <label class="role selected" data-role="swimmer">
+              <input type="radio" name="roleRadio" value="swimmer" checked />
+              <div class="top">
+                <div class="name">
+                  <span>🏊‍♂️ Swimmer</span>
+                  <span class="pill">Swimmer tools</span>
+                </div>
+              </div>
+              <div class="desc">Access swimmer features + beach info (no lifeguard dashboard).</div>
+            </label>
 
-          <div class="row">
-            <div class="small">Tip: make sure caps lock is off.</div>
-            <!-- Optional placeholder for future “Forgot password” flow -->
-            <div class="small" style="opacity:.85;">Forgot password? (coming soon)</div>
+            <label class="role" data-role="lifeguard">
+              <input type="radio" name="roleRadio" value="lifeguard" />
+              <div class="top">
+                <div class="name">
+                  <span>🛟 Lifeguard</span>
+                  <span class="pill">Dashboard tools</span>
+                </div>
+              </div>
+              <div class="desc">Access lifeguard dashboard + beach pages (no swimmer-only features).</div>
+            </label>
           </div>
         </div>
 
-        <button class="btn btn-primary" type="submit">Login</button>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">Create account</button>
+          <p class="tiny">
+            By creating an account you agree to use SwimSafe responsibly and follow local water safety guidance.
+          </p>
+        </div>
 
-        <p style="margin: 10px 0 0; color: var(--muted2); font-size: 12px; line-height:1.4;">
-          By logging in, you confirm you’ll use SwimSafe responsibly and follow local lifeguard guidance.
-        </p>
-
-        <div class="footer">
-          <p class="tiny">SwimSafe • Final Year Project</p>
-          <div style="display:flex; gap:12px; align-items:center;">
-            <a href="{{ url_for('home') }}">Back to home</a>
-            <a href="{{ url_for('beaches') }}">Beaches</a>
-          </div>
+        <div class="meta">
+          <div class="small">SwimSafe • Final Year Project</div>
+          <div class="small"><a href="/login">Return to login</a></div>
         </div>
       </form>
     </section>
 
   </div>
+
+  <script>
+    // Make the role cards update the <select name="role"> so Flask receives it.
+    (function () {
+      const cards = document.querySelectorAll(".role");
+      const select = document.getElementById("roleSelect");
+
+      function setSelected(role) {
+        select.value = role;
+        cards.forEach(c => c.classList.toggle("selected", c.dataset.role === role));
+      }
+
+      cards.forEach(card => {
+        card.addEventListener("click", () => setSelected(card.dataset.role));
+      });
+
+      // if user changes the dropdown manually, sync cards too
+      select.addEventListener("change", () => setSelected(select.value));
+    })();
+  </script>
 </body>
 </html>
