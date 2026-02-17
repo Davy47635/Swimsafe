@@ -7,278 +7,527 @@
 
   <style>
     :root{
-      --bg:#f6f8fb;
-      --card:#fff;
-      --text:#0f172a;
-      --muted:#64748b;
-      --line:#e6edf5;
+      /* Dark theme palette (matches your Home/Beaches vibe) */
+      --bg0:#071221;
+      --bg1:#071a2c;
+      --bg2:#0b2740;
 
-      --primary:#1f6feb;
+      --card: rgba(255,255,255,0.06);
+      --card2: rgba(255,255,255,0.08);
+      --stroke: rgba(255,255,255,0.10);
+      --stroke2: rgba(255,255,255,0.14);
 
-      --ok:#16a34a;
+      --text:#e7eefb;
+      --muted: rgba(231,238,251,0.72);
+      --muted2: rgba(231,238,251,0.55);
+
+      --primary:#2e7cf6;
+      --primary2:#1f6feb;
+
+      --ok:#22c55e;
       --warn:#f59e0b;
-      --danger:#dc2626;
+      --danger:#ef4444;
 
-      --shadow: 0 10px 25px rgba(15,23,42,0.06);
-      --shadow-sm: 0 6px 14px rgba(15,23,42,0.06);
-      --radius: 16px;
-      --radius-sm: 12px;
+      --shadow: 0 18px 50px rgba(0,0,0,0.35);
+      --shadowSm: 0 10px 24px rgba(0,0,0,0.25);
+
+      --radius: 18px;
+      --radiusSm: 14px;
 
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
     }
 
-    *{box-sizing:border-box}
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      background: var(--bg);
       color: var(--text);
+      background:
+        radial-gradient(900px 420px at 20% 20%, rgba(46,124,246,0.28), transparent 60%),
+        radial-gradient(650px 380px at 78% 28%, rgba(34,197,94,0.14), transparent 60%),
+        radial-gradient(900px 520px at 45% 110%, rgba(245,158,11,0.10), transparent 65%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 40%, var(--bg2));
+      overflow-x:hidden;
     }
-    .wrap{max-width:1160px;margin:26px auto 60px;padding:0 16px}
 
-    /* Nav */
-    nav{
-      display:flex; gap:12px; margin-bottom:14px;
-      font-size:14px; flex-wrap:wrap; align-items:center;
+    .wrap{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px 16px 60px;
     }
-    nav a{color:var(--primary);text-decoration:none;font-weight:700}
-    nav a:hover{text-decoration:underline}
-    .spacer{flex:1}
-    .who{
+
+    /* ---------- TOP BAR (match your Home/Beaches) ---------- */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 16px;
+      padding: 14px 14px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+      border-radius: 22px;
+      box-shadow: var(--shadowSm);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      min-width: 220px;
+    }
+    .logo{
+      width: 38px; height: 38px;
+      border-radius: 12px;
+      background: radial-gradient(circle at 30% 30%, rgba(46,124,246,0.70), rgba(46,124,246,0.20));
+      border: 1px solid rgba(255,255,255,0.18);
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+    }
+    .brand h1{
+      margin:0;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing:-0.02em;
+      line-height: 1.1;
+    }
+    .brand small{
+      display:block;
+      margin-top: 2px;
+      color: var(--muted2);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .navlinks{
+      display:flex;
+      gap: 18px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:center;
+      flex: 1;
+    }
+    .navlinks a{
       color: var(--muted);
-      font-size: 13px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,0.7);
-      backdrop-filter: blur(6px);
+      text-decoration:none;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      transition: 0.15s ease;
+    }
+    .navlinks a:hover{
+      color: var(--text);
+      border-color: rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .session{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      justify-content:flex-end;
+      min-width: 220px;
+      flex-wrap:wrap;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
       padding: 8px 12px;
       border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .dot{
+      width:10px; height:10px; border-radius:999px;
+      background: var(--ok);
+      box-shadow: 0 0 0 4px rgba(34,197,94,0.14);
     }
 
-    /* Hero */
+    /* ---------- HERO ---------- */
     .hero{
-      border:1px solid var(--line);
+      margin-top: 16px;
+      border: 1px solid var(--stroke);
       border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.80));
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
       box-shadow: var(--shadow);
-      padding:18px;
-      position:relative;
+      padding: 18px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      position: relative;
       overflow:hidden;
     }
     .hero:before{
       content:"";
       position:absolute;
-      inset:-40px -60px auto auto;
-      width:280px;height:280px;
-      background: radial-gradient(circle at 30% 30%, rgba(31,111,235,0.20), transparent 55%);
-      transform: rotate(18deg);
+      inset:-80px -120px auto auto;
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 30% 30%, rgba(46,124,246,0.35), transparent 60%);
+      transform: rotate(15deg);
       pointer-events:none;
     }
-    .hero-row{
-      display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;
+    .heroTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
     }
-    h1{margin:0;font-size:34px;letter-spacing:-0.02em;line-height:1.1}
-    .meta{
-      margin-top:8px;
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    .heroTitle h2{
+      margin:0;
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing:-0.03em;
+      line-height: 1.08;
+    }
+    .heroSub{
+      margin-top: 8px;
       color: var(--muted);
       font-size: 14px;
+      font-weight: 600;
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      align-items:center;
     }
     .chip{
-      display:inline-flex; gap:8px; align-items:center;
-      border:1px solid var(--line); background:#fff;
-      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
       padding: 6px 10px;
-      font-size: 13px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
       color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
     }
     .chip code{
       font-family: var(--mono);
       font-size: 12px;
-      color: #334155;
-      background:#f8fafc;
-      border:1px solid var(--line);
-      padding:2px 6px;
-      border-radius: 8px;
+      color: rgba(231,238,251,0.86);
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.10);
+      padding: 2px 6px;
+      border-radius: 10px;
     }
 
-    /* Stats */
-    .stats{
-      display:grid; gap:12px;
+    /* ---------- KPI ROW ---------- */
+    .kpis{
+      margin-top: 14px;
+      display:grid;
       grid-template-columns: 1fr;
-      margin-top:14px;
+      gap: 12px;
     }
-    @media(min-width:820px){ .stats{grid-template-columns:repeat(4,1fr)} }
-    .stat{
-      border:1px solid var(--line);
-      border-radius: var(--radius-sm);
-      background:#fff;
-      padding:14px;
-      box-shadow: var(--shadow-sm);
+    @media(min-width: 880px){
+      .kpis{ grid-template-columns: repeat(4, 1fr); }
     }
-    .stat .label{
-      font-size:12px; color: var(--muted);
-      font-weight:800; letter-spacing:.04em; text-transform:uppercase;
+
+    .kpi{
+      border: 1px solid var(--stroke);
+      border-radius: var(--radiusSm);
+      background: rgba(255,255,255,0.05);
+      padding: 14px;
+      box-shadow: var(--shadowSm);
     }
-    .stat .value{
-      margin-top:6px;
-      font-size:18px;
-      font-weight:900;
+    .kpi .label{
+      font-size: 12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color: var(--muted2);
+      font-weight: 800;
+    }
+    .kpi .value{
+      margin-top: 8px;
+      font-size: 18px;
+      font-weight: 900;
       letter-spacing:-0.01em;
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap:wrap;
     }
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding: 4px 10px;
-      border-radius:999px;
-      font-size:13px;
-      font-weight:900;
-      border:1px solid transparent;
+
+    .status{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 13px;
+      font-weight: 900;
       white-space:nowrap;
     }
-    .pill.ok{background:rgba(22,163,74,.10);color:#065f46;border-color:rgba(22,163,74,.22)}
-    .pill.warn{background:rgba(245,158,11,.12);color:#7c2d12;border-color:rgba(245,158,11,.28)}
-    .pill.danger{background:rgba(220,38,38,.10);color:#7f1d1d;border-color:rgba(220,38,38,.28)}
-    .pill.neutral{background:#f1f5f9;color:#334155;border-color:#e2e8f0}
-    .kpi{
-      display:inline-flex; align-items:center; gap:8px;
+    .status.ok{ background: rgba(34,197,94,0.14); border-color: rgba(34,197,94,0.22); color: #bff7d1; }
+    .status.warn{ background: rgba(245,158,11,0.16); border-color: rgba(245,158,11,0.26); color: #ffe4b5; }
+    .status.danger{ background: rgba(239,68,68,0.14); border-color: rgba(239,68,68,0.24); color: #ffd1d1; }
+    .status.neutral{ background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.16); color: rgba(231,238,251,0.86); }
+
+    .miniTag{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
       padding: 4px 10px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:#f8fafc;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.20);
       color: var(--muted);
-      font-size:13px;
-      font-weight:800;
+      font-size: 13px;
+      font-weight: 800;
     }
 
-    /* Layout */
+    /* ---------- MAIN GRID ---------- */
     .grid{
-      display:grid; gap:14px; margin-top:14px;
+      margin-top: 14px;
+      display:grid;
       grid-template-columns: 1fr;
+      gap: 14px;
     }
-    @media(min-width:980px){ .grid.two{grid-template-columns:1.12fr 0.88fr} }
+    @media(min-width: 1020px){
+      .grid.two{ grid-template-columns: 1.25fr 0.75fr; }
+    }
 
-    /* Cards */
     .card{
-      background: var(--card);
-      border:1px solid var(--line);
+      border: 1px solid var(--stroke);
       border-radius: var(--radius);
-      box-shadow: var(--shadow-sm);
-      padding:16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+      box-shadow: var(--shadowSm);
+      padding: 16px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
-    .card-head{
-      display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    .cardHead{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap:wrap;
       margin-bottom: 10px;
     }
-    .card h2{margin:0;font-size:18px;letter-spacing:-0.01em}
-    .card-sub{margin-top:4px;color:var(--muted);font-size:13px}
-
-    /* Tables */
-    .table-wrap{
-      overflow:auto;
-      border-radius: 12px;
-      border:1px solid var(--line);
-      margin-top:10px;
+    .cardHead h3{
+      margin:0;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing:-0.01em;
     }
-    table{width:100%;border-collapse:separate;border-spacing:0}
-    th,td{padding:12px;border-top:1px solid var(--line);text-align:left;vertical-align:top}
-    th{
-      position: sticky; top:0; z-index:2;
-      background:#f9fbfe;
+    .cardHead .sub{
+      margin-top: 4px;
       color: var(--muted);
-      font-size:12px;
-      letter-spacing:.03em;
-      text-transform:uppercase;
-      font-weight:900;
-      border-top:none;
+      font-size: 13px;
+      font-weight: 600;
     }
-    tbody tr:hover{background:#fafcff}
-    .td-mono{font-family:var(--mono);font-size:12px;color:#334155}
-    .muted{color:var(--muted)}
+    .countBadge{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.20);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
 
     /* Empty state */
     .empty{
-      border: 1px dashed rgba(100,116,139,0.35);
-      background: linear-gradient(180deg, #ffffff, #fbfdff);
-      border-radius: var(--radius-sm);
+      border: 1px dashed rgba(255,255,255,0.16);
+      border-radius: var(--radiusSm);
+      background: rgba(0,0,0,0.18);
       padding: 14px;
       color: var(--muted);
       display:flex;
-      gap:12px;
+      gap: 12px;
       align-items:flex-start;
-      margin-top:10px;
+      margin-top: 10px;
     }
-    .empty .badge{
-      width:34px;height:34px;border-radius:12px;
-      background: rgba(31,111,235,0.10);
-      display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+    .empty .ico{
+      width: 34px; height: 34px;
+      border-radius: 12px;
+      background: rgba(46,124,246,0.16);
+      border: 1px solid rgba(46,124,246,0.20);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex: 0 0 auto;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.22);
     }
-    .empty p{margin:0;font-size:14px}
-    .empty .hint{margin-top:6px;font-size:13px;color:#94a3b8}
+    .empty p{ margin:0; font-size: 14px; font-weight: 650; color: rgba(231,238,251,0.86); }
+    .empty .hint{ margin-top: 6px; font-size: 13px; color: var(--muted2); font-weight: 600; }
+
+    /* Tables */
+    .tableWrap{
+      margin-top: 10px;
+      overflow:auto;
+      border-radius: var(--radiusSm);
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.20);
+    }
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      min-width: 640px;
+    }
+    th, td{
+      padding: 12px;
+      text-align:left;
+      vertical-align:top;
+      border-top: 1px solid rgba(255,255,255,0.10);
+      color: rgba(231,238,251,0.90);
+      font-size: 14px;
+    }
+    th{
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 900;
+      border-top: none;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    tbody tr:hover{
+      background: rgba(255,255,255,0.05);
+    }
+    .mono{ font-family: var(--mono); font-size: 12px; color: rgba(231,238,251,0.82); }
 
     /* Photos */
     .photos{
-      display:grid; gap:12px;
+      margin-top: 10px;
+      display:grid;
+      gap: 12px;
       grid-template-columns: repeat(2, 1fr);
-      margin-top:10px;
     }
-    @media(min-width:720px){ .photos{grid-template-columns:repeat(3,1fr)} }
-    @media(min-width:1040px){ .photos{grid-template-columns:repeat(4,1fr)} }
-
+    @media(min-width: 740px){
+      .photos{ grid-template-columns: repeat(3, 1fr); }
+    }
+    @media(min-width: 1100px){
+      .photos{ grid-template-columns: repeat(4, 1fr); }
+    }
     .photo{
-      border:1px solid var(--line);
-      border-radius: var(--radius-sm);
+      border-radius: var(--radiusSm);
       overflow:hidden;
-      background:#fff;
-      box-shadow: 0 10px 24px rgba(15,23,42,0.06);
-      transition: transform .12s ease, box-shadow .12s ease;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.20);
+      box-shadow: var(--shadowSm);
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
     }
-    .photo:hover{transform:translateY(-1px);box-shadow:0 16px 32px rgba(15,23,42,0.08)}
-    .photo img{width:100%;height:160px;object-fit:cover;display:block;background:#f1f5f9}
-    .photo .cap{padding:10px;font-size:12px;color:var(--muted);line-height:1.35}
-    .photo .cap b{color:#334155}
+    .photo:hover{
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,0.18);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+    }
+    .photo img{
+      width:100%;
+      height:160px;
+      object-fit:cover;
+      display:block;
+      background: rgba(255,255,255,0.04);
+    }
+    .cap{
+      padding: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 650;
+    }
+    .cap b{ color: rgba(231,238,251,0.90); }
 
-    /* Reports filter (view-only) */
+    /* View-only filters */
     .filters{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      align-items:center;
       margin-top: 10px;
     }
-    .input{
-      border:1px solid var(--line);
-      background:#fff;
-      border-radius: 12px;
-      padding: 10px 12px;
+    .input, .select{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.25);
+      color: var(--text);
+      padding: 11px 12px;
       font-size: 14px;
+      outline: none;
+      box-shadow: var(--shadowSm);
       min-width: 240px;
-      outline: none;
-      box-shadow: var(--shadow-sm);
     }
-    .select{
-      border:1px solid var(--line);
-      background:#fff;
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 14px;
-      outline: none;
-      box-shadow: var(--shadow-sm);
+    .select{ min-width: 180px; }
+    .input::placeholder{ color: rgba(231,238,251,0.45); }
+    .note{
+      margin-top: 8px;
+      color: var(--muted2);
+      font-size: 12px;
+      font-weight: 650;
     }
-    .smallnote{font-size:12px;color:#94a3b8;margin-top:8px}
+
+    /* Small helper for spacing in cards */
+    .stack{ display:flex; flex-direction:column; gap: 8px; }
+
+    /* Better mobile spacing */
+    @media(max-width: 520px){
+      .heroTitle h2{ font-size: 30px; }
+      table{ min-width: 520px; }
+      .input{ min-width: 100%; }
+      .select{ min-width: 100%; }
+    }
   </style>
 </head>
 
 <body>
 <div class="wrap">
 
-  <nav aria-label="Primary">
-    <a href="{{ url_for('home') }}">Home</a>
-    <a href="{{ url_for('beaches') }}">Beaches</a>
-    <a href="{{ url_for('swimmer') }}">Swimmer</a>
-    <a href="{{ url_for('lifeguard') }}">Lifeguard</a>
-    <span class="spacer"></span>
-    {% if username %}
-      <span class="who">Logged in as <b style="color:#334155">{{ username }}</b>{% if role %} <span class="muted">({{ role }})</span>{% endif %}</span>
-    {% endif %}
-  </nav>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <!-- simple wave icon -->
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M3 14c2 0 3-1 5-1s3 1 5 1 3-1 5-1 3 1 3 1" stroke="rgba(231,238,251,0.95)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M3 18c2 0 3-1 5-1s3 1 5 1 3-1 5-1 3 1 3 1" stroke="rgba(231,238,251,0.75)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>SwimSafe</h1>
+        <small>Beach detail</small>
+      </div>
+    </div>
 
+    <nav class="navlinks" aria-label="Primary">
+      <a href="{{ url_for('home') }}">Home</a>
+      <a href="{{ url_for('beaches') }}">Beaches</a>
+      <a href="{{ url_for('lifeguard') }}">Lifeguard</a>
+      <a href="{{ url_for('swimmer') }}">Swimmer</a>
+    </nav>
+
+    <div class="session">
+      {% if username %}
+        <span class="pill">
+          <span class="dot"></span>
+          Logged in as <span style="color:rgba(231,238,251,0.92)">{{ username }}</span>
+          {% if role %}<span style="color:var(--muted2)">({{ role }})</span>{% endif %}
+        </span>
+      {% endif %}
+    </div>
+  </header>
+
+  {# ---------- helpers ---------- #}
   {% set latest_flag = (latest_report.flag_status if latest_report else None) %}
   {% set flag_lower = (latest_flag|lower if latest_flag else "") %}
   {% if "green" in flag_lower %}
@@ -295,17 +544,20 @@
   {% set reports_count = (reports|length if reports else 0) %}
   {% set photos_count = (photos|length if photos else 0) %}
 
-  <section class="hero">
-    <div class="hero-row">
-      <div>
-        <h1>{{ beach.name }}</h1>
-        <div class="meta">
+  <!-- Hero -->
+  <section class="hero" aria-label="Beach overview">
+    <div class="heroTop">
+      <div class="heroTitle">
+        <h2>{{ beach.name }}</h2>
+        <div class="heroSub">
           {% if beach.county %}
             <span class="chip">📍 {{ beach.county }}</span>
           {% endif %}
+
           {% if beach.latitude and beach.longitude %}
             <span class="chip">Coordinates <code>{{ beach.latitude }}</code> <code>{{ beach.longitude }}</code></span>
           {% endif %}
+
           {% if latest_report and latest_report.reported_at %}
             <span class="chip">Last updated <code>{{ latest_report.reported_at.strftime("%Y-%m-%d %H:%M") }}</code></span>
           {% else %}
@@ -315,104 +567,104 @@
       </div>
     </div>
 
-    <div class="stats">
-      <div class="stat">
-        <div class="label">Flag Status</div>
+    <div class="kpis" aria-label="Key indicators">
+      <div class="kpi">
+        <div class="label">Flag status</div>
         <div class="value">
           {% if latest_report and latest_report.flag_status %}
-            <span class="pill {{ flag_class }}">{{ latest_report.flag_status }}</span>
+            <span class="status {{ flag_class }}">{{ latest_report.flag_status }}</span>
           {% else %}
-            <span class="pill neutral">No report</span>
+            <span class="status neutral">No report</span>
           {% endif %}
         </div>
       </div>
 
-      <div class="stat">
-        <div class="label">Water Temperature</div>
+      <div class="kpi">
+        <div class="label">Water temperature</div>
         <div class="value">
           {% if latest_report and latest_report.temp_c is not none %}
-            {{ latest_report.temp_c }}°C <span class="kpi">latest</span>
+            {{ latest_report.temp_c }}°C <span class="miniTag">latest</span>
           {% else %}
-            <span class="muted">—</span>
+            — <span class="miniTag">no data</span>
           {% endif %}
         </div>
       </div>
 
-      <div class="stat">
+      <div class="kpi">
         <div class="label">Tide</div>
         <div class="value">
           {% if latest_report and latest_report.tide %}
-            {{ latest_report.tide }} <span class="kpi">latest</span>
+            {{ latest_report.tide }} <span class="miniTag">latest</span>
           {% else %}
-            <span class="muted">—</span>
+            — <span class="miniTag">no data</span>
           {% endif %}
         </div>
       </div>
 
-      <div class="stat">
-        <div class="label">Open Issues</div>
+      <div class="kpi">
+        <div class="label">Open issues</div>
         <div class="value">
-          {{ issues_count }} <span class="kpi">active</span>
+          {{ issues_count }} <span class="miniTag">active</span>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- Main grid -->
   <div class="grid two">
 
-    <!-- LEFT -->
+    <!-- Left column -->
     <div class="grid" style="margin-top:0">
-
       <section class="card">
-        <div class="card-head">
+        <div class="cardHead">
           <div>
-            <h2>Latest Official Report</h2>
-            <div class="card-sub">Most recent lifeguard update for this beach.</div>
+            <h3>Latest Official Report</h3>
+            <div class="sub">Most recent lifeguard update for this beach.</div>
           </div>
-          <div class="card-sub">
-            {% if latest_report and latest_report.reported_at %}
-              Updated <span class="td-mono">{{ latest_report.reported_at.strftime("%Y-%m-%d %H:%M") }}</span>
-            {% endif %}
-          </div>
+          {% if latest_report and latest_report.reported_at %}
+            <span class="countBadge">Updated <span class="mono">{{ latest_report.reported_at.strftime("%Y-%m-%d %H:%M") }}</span></span>
+          {% endif %}
         </div>
 
         {% if latest_report %}
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
-            <span class="pill {{ flag_class }}">Flag: {{ latest_report.flag_status or "—" }}</span>
-            <span class="kpi">Tide: {{ latest_report.tide or "—" }}</span>
-            <span class="kpi">Temp: {{ latest_report.temp_c if latest_report.temp_c is not none else "—" }}°C</span>
-          </div>
-
-          {% if latest_report.notes %}
-            <div style="margin-top:12px;line-height:1.6">
-              <b style="color:#334155">Notes</b><br/>
-              {{ latest_report.notes }}
+          <div class="stack">
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <span class="status {{ flag_class }}">Flag: {{ latest_report.flag_status or "—" }}</span>
+              <span class="miniTag">Tide: {{ latest_report.tide or "—" }}</span>
+              <span class="miniTag">Temp: {{ latest_report.temp_c if latest_report.temp_c is not none else "—" }}°C</span>
             </div>
-          {% else %}
-            <div class="smallnote">No notes provided on the latest report.</div>
-          {% endif %}
+
+            {% if latest_report.notes %}
+              <div style="margin-top:6px; line-height:1.65; color: rgba(231,238,251,0.90); font-weight:650;">
+                <span style="color:var(--muted); font-weight:800; letter-spacing:.06em; text-transform:uppercase; font-size:12px;">Notes</span><br/>
+                {{ latest_report.notes }}
+              </div>
+            {% else %}
+              <div class="note">No notes provided on the latest report.</div>
+            {% endif %}
+          </div>
         {% else %}
           <div class="empty">
-            <div class="badge" aria-hidden="true">ℹ️</div>
+            <div class="ico" aria-hidden="true">ℹ️</div>
             <div>
-              <p><b>No official report yet.</b> This beach has no lifeguard report recorded.</p>
-              <div class="hint">If you are a lifeguard, reports are submitted from the Lifeguard page.</div>
+              <p>No official report yet.</p>
+              <div class="hint">Reports are published from the Lifeguard page. This page is view-only.</div>
             </div>
           </div>
         {% endif %}
       </section>
 
       <section class="card" id="recent-reports">
-        <div class="card-head">
+        <div class="cardHead">
           <div>
-            <h2>Recent Reports</h2>
-            <div class="card-sub">Browse historical reports for {{ beach.name }}.</div>
+            <h3>Recent Reports</h3>
+            <div class="sub">Browse historical reports for {{ beach.name }}.</div>
           </div>
-          <div class="card-sub">{{ reports_count }} total</div>
+          <span class="countBadge">{{ reports_count }} total</span>
         </div>
 
-        <div class="filters" aria-label="Report filters">
-          <input class="input" id="reportSearch" type="search" placeholder="Search notes, tide, flag, temp…" aria-label="Search reports">
+        <div class="filters" aria-label="View filters">
+          <input class="input" id="reportSearch" type="search" placeholder="Search notes, tide, flag, temperature…" aria-label="Search reports">
           <select class="select" id="flagFilter" aria-label="Filter by flag">
             <option value="">All flags</option>
             <option value="green">Green</option>
@@ -420,16 +672,16 @@
             <option value="red">Red</option>
           </select>
         </div>
-        <div class="smallnote">Filters are view-only and run in your browser (no data is changed).</div>
+        <div class="note">Filters are view-only and run in your browser (no data is changed).</div>
 
-        <div class="table-wrap" role="region" aria-label="Recent reports table" tabindex="0">
+        <div class="tableWrap" role="region" aria-label="Recent reports table" tabindex="0">
           <table id="reportsTable">
             <thead>
               <tr>
-                <th style="min-width:155px;">Time</th>
-                <th style="min-width:120px;">Tide</th>
-                <th style="min-width:110px;">Temp °C</th>
-                <th style="min-width:140px;">Flag</th>
+                <th style="min-width:170px;">Time</th>
+                <th style="min-width:140px;">Tide</th>
+                <th style="min-width:120px;">Temp °C</th>
+                <th style="min-width:160px;">Flag</th>
                 <th>Notes</th>
               </tr>
             </thead>
@@ -445,49 +697,52 @@
                 {% else %}
                   {% set row_class = "neutral" %}
                 {% endif %}
+
                 <tr data-flag="{{ fl }}">
-                  <td class="td-mono">{{ r.reported_at.strftime("%Y-%m-%d %H:%M") }}</td>
+                  <td class="mono">{{ r.reported_at.strftime("%Y-%m-%d %H:%M") }}</td>
                   <td>{{ r.tide or "—" }}</td>
                   <td>{{ r.temp_c if r.temp_c is not none else "—" }}</td>
-                  <td><span class="pill {{ row_class }}">{{ r.flag_status or "—" }}</span></td>
+                  <td><span class="status {{ row_class }}">{{ r.flag_status or "—" }}</span></td>
                   <td>{{ r.notes or "" }}</td>
                 </tr>
               {% else %}
-                <tr><td colspan="5" class="muted" style="padding:14px;">No reports yet.</td></tr>
+                <tr>
+                  <td colspan="5" style="color:var(--muted); font-weight:700; padding:14px;">
+                    No reports yet.
+                  </td>
+                </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
       </section>
-
     </div>
 
-    <!-- RIGHT -->
+    <!-- Right column -->
     <div class="grid" style="margin-top:0">
-
       <section class="card">
-        <div class="card-head">
+        <div class="cardHead">
           <div>
-            <h2>Open Swimmer Issues</h2>
-            <div class="card-sub">Active concerns raised by swimmers for this beach.</div>
+            <h3>Open Swimmer Issues</h3>
+            <div class="sub">Active concerns raised by swimmers for this beach.</div>
           </div>
-          <div class="card-sub">{{ issues_count }} open</div>
+          <span class="countBadge">{{ issues_count }} open</span>
         </div>
 
         {% if issues and issues|length > 0 %}
-          <div class="table-wrap" role="region" aria-label="Open issues table" tabindex="0">
+          <div class="tableWrap" role="region" aria-label="Open issues table" tabindex="0">
             <table>
               <thead>
                 <tr>
-                  <th style="min-width:155px;">Time</th>
-                  <th style="min-width:140px;">Type</th>
+                  <th style="min-width:170px;">Time</th>
+                  <th style="min-width:150px;">Type</th>
                   <th>Description</th>
                 </tr>
               </thead>
               <tbody>
                 {% for i in issues %}
                   <tr>
-                    <td class="td-mono">{{ i.submitted_at.strftime("%Y-%m-%d %H:%M") }}</td>
+                    <td class="mono">{{ i.submitted_at.strftime("%Y-%m-%d %H:%M") }}</td>
                     <td>{{ i.issue_type or "—" }}</td>
                     <td>{{ i.description or "" }}</td>
                   </tr>
@@ -497,22 +752,22 @@
           </div>
         {% else %}
           <div class="empty">
-            <div class="badge" aria-hidden="true">✅</div>
+            <div class="ico" aria-hidden="true">✅</div>
             <div>
-              <p><b>No open issues.</b> There are currently no active swimmer-reported concerns.</p>
-              <div class="hint">Issues are submitted from the Swimmer page.</div>
+              <p>No open issues.</p>
+              <div class="hint">Issues are submitted from the Swimmer page. This page is view-only.</div>
             </div>
           </div>
         {% endif %}
       </section>
 
       <section class="card">
-        <div class="card-head">
+        <div class="cardHead">
           <div>
-            <h2>Photos</h2>
-            <div class="card-sub">Lifeguard uploads for entry points and visual conditions.</div>
+            <h3>Photos</h3>
+            <div class="sub">Lifeguard uploads for entry points and visual conditions.</div>
           </div>
-          <div class="card-sub">{{ photos_count }} uploaded</div>
+          <span class="countBadge">{{ photos_count }} uploaded</span>
         </div>
 
         {% set pics = photos|default([]) %}
@@ -525,7 +780,7 @@
                   <div><b>{{ p.caption if p.caption else "Beach photo" }}</b></div>
                   <div>
                     {% if p.uploaded_at %}
-                      Uploaded <span class="td-mono">{{ p.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</span>
+                      Uploaded <span class="mono">{{ p.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</span>
                     {% else %}
                       Uploaded
                     {% endif %}
@@ -536,22 +791,22 @@
           </div>
         {% else %}
           <div class="empty">
-            <div class="badge" aria-hidden="true">📷</div>
+            <div class="ico" aria-hidden="true">📷</div>
             <div>
-              <p><b>No photos yet.</b> Photos are added by lifeguards when available.</p>
-              <div class="hint">Uploads are managed from the Lifeguard page.</div>
+              <p>No photos yet.</p>
+              <div class="hint">Photos are added by lifeguards when available (via Lifeguard tools).</div>
             </div>
           </div>
         {% endif %}
       </section>
-
     </div>
+
   </div>
 
 </div>
 
 <script>
-  // View-only: client-side search + filter for Recent Reports
+  // View-only: client-side search + flag filter (no server changes)
   (function(){
     const search = document.getElementById("reportSearch");
     const filter = document.getElementById("flagFilter");
@@ -560,19 +815,23 @@
 
     const rows = Array.from(table.querySelectorAll("tbody tr"));
 
-    function normalize(s){ return (s || "").toLowerCase().trim(); }
+    function norm(s){ return (s || "").toLowerCase().trim(); }
 
     function apply(){
-      const q = normalize(search.value);
-      const f = normalize(filter.value);
+      const q = norm(search.value);
+      const f = norm(filter.value);
 
       rows.forEach(row => {
-        const text = normalize(row.innerText);
-        const flag = normalize(row.getAttribute("data-flag"));
-
-        const matchesQ = !q || text.includes(q);
-        const matchesF = !f || flag.includes(f); // contains 'green', 'yellow', 'amber', 'red'
-        row.style.display = (matchesQ && matchesF) ? "" : "none";
+        // skip "No reports yet" row
+        if(!row.getAttribute("data-flag")){
+          row.style.display = (q || f) ? "none" : "";
+          return;
+        }
+        const text = norm(row.innerText);
+        const flag = norm(row.getAttribute("data-flag"));
+        const okQ = !q || text.includes(q);
+        const okF = !f || flag.includes(f);
+        row.style.display = (okQ && okF) ? "" : "none";
       });
     }
 
@@ -583,3 +842,4 @@
 
 </body>
 </html>
+
