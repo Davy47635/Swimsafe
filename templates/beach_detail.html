@@ -5,203 +5,581 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>SwimSafe — {{ beach.name }}</title>
 
-  <!-- Reference: MDN - Tables & Layout (2025) -->
-  <!-- Some structure ideas helped by ChatGPT and then edited by me. -->
-
   <style>
     :root{
-      --bg:#f6f8fb; --card:#fff; --line:#e8edf3; --text:#111;
-      --muted:#667085; --btn:#1f6feb;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,Arial;background:var(--bg);color:var(--text)}
-    .container{max-width:1100px;margin:28px auto;padding:0 16px}
+      --bg:#f6f8fb;
+      --card:#fff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e6edf5;
 
-    nav{
-      display:flex; gap:12px; margin-bottom:14px; font-size:14px; flex-wrap:wrap; align-items:center;
+      --primary:#1f6feb;
+
+      --ok:#16a34a;
+      --warn:#f59e0b;
+      --danger:#dc2626;
+
+      --shadow: 0 10px 25px rgba(15,23,42,0.06);
+      --shadow-sm: 0 6px 14px rgba(15,23,42,0.06);
+      --radius: 16px;
+      --radius-sm: 12px;
+
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
     }
-    nav a{color:var(--btn);text-decoration:none}
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap{max-width:1160px;margin:26px auto 60px;padding:0 16px}
+
+    /* Nav */
+    nav{
+      display:flex; gap:12px; margin-bottom:14px;
+      font-size:14px; flex-wrap:wrap; align-items:center;
+    }
+    nav a{color:var(--primary);text-decoration:none;font-weight:700}
     nav a:hover{text-decoration:underline}
     .spacer{flex:1}
-    .who{color:var(--muted); font-size:13px}
+    .who{
+      color: var(--muted);
+      font-size: 13px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(6px);
+      padding: 8px 12px;
+      border-radius: 999px;
+    }
 
-    h1{margin:0 0 6px 0}
+    /* Hero */
+    .hero{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.80));
+      box-shadow: var(--shadow);
+      padding:18px;
+      position:relative;
+      overflow:hidden;
+    }
+    .hero:before{
+      content:"";
+      position:absolute;
+      inset:-40px -60px auto auto;
+      width:280px;height:280px;
+      background: radial-gradient(circle at 30% 30%, rgba(31,111,235,0.20), transparent 55%);
+      transform: rotate(18deg);
+      pointer-events:none;
+    }
+    .hero-row{
+      display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;
+    }
+    h1{margin:0;font-size:34px;letter-spacing:-0.02em;line-height:1.1}
+    .meta{
+      margin-top:8px;
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .chip{
+      display:inline-flex; gap:8px; align-items:center;
+      border:1px solid var(--line); background:#fff;
+      border-radius:999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .chip code{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #334155;
+      background:#f8fafc;
+      border:1px solid var(--line);
+      padding:2px 6px;
+      border-radius: 8px;
+    }
+
+    /* Stats */
+    .stats{
+      display:grid; gap:12px;
+      grid-template-columns: 1fr;
+      margin-top:14px;
+    }
+    @media(min-width:820px){ .stats{grid-template-columns:repeat(4,1fr)} }
+    .stat{
+      border:1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background:#fff;
+      padding:14px;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat .label{
+      font-size:12px; color: var(--muted);
+      font-weight:800; letter-spacing:.04em; text-transform:uppercase;
+    }
+    .stat .value{
+      margin-top:6px;
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:-0.01em;
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 4px 10px;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:900;
+      border:1px solid transparent;
+      white-space:nowrap;
+    }
+    .pill.ok{background:rgba(22,163,74,.10);color:#065f46;border-color:rgba(22,163,74,.22)}
+    .pill.warn{background:rgba(245,158,11,.12);color:#7c2d12;border-color:rgba(245,158,11,.28)}
+    .pill.danger{background:rgba(220,38,38,.10);color:#7f1d1d;border-color:rgba(220,38,38,.28)}
+    .pill.neutral{background:#f1f5f9;color:#334155;border-color:#e2e8f0}
+    .kpi{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 4px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#f8fafc;
+      color: var(--muted);
+      font-size:13px;
+      font-weight:800;
+    }
+
+    /* Layout */
+    .grid{
+      display:grid; gap:14px; margin-top:14px;
+      grid-template-columns: 1fr;
+    }
+    @media(min-width:980px){ .grid.two{grid-template-columns:1.12fr 0.88fr} }
+
+    /* Cards */
+    .card{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding:16px;
+    }
+    .card-head{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+    .card h2{margin:0;font-size:18px;letter-spacing:-0.01em}
+    .card-sub{margin-top:4px;color:var(--muted);font-size:13px}
+
+    /* Tables */
+    .table-wrap{
+      overflow:auto;
+      border-radius: 12px;
+      border:1px solid var(--line);
+      margin-top:10px;
+    }
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    th,td{padding:12px;border-top:1px solid var(--line);text-align:left;vertical-align:top}
+    th{
+      position: sticky; top:0; z-index:2;
+      background:#f9fbfe;
+      color: var(--muted);
+      font-size:12px;
+      letter-spacing:.03em;
+      text-transform:uppercase;
+      font-weight:900;
+      border-top:none;
+    }
+    tbody tr:hover{background:#fafcff}
+    .td-mono{font-family:var(--mono);font-size:12px;color:#334155}
     .muted{color:var(--muted)}
 
-    .grid{display:grid;gap:14px}
-    @media(min-width:900px){.grid-2{grid-template-columns:1fr 1fr}}
-
-    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
-    .card h2{margin:0 0 10px 0; font-size:18px}
-
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{padding:12px;border-top:1px solid var(--line);text-align:left;vertical-align:top}
-    th{background:#f9fbfd;color:var(--muted);font-size:13px;border-top:none}
-    tbody tr:hover{background:#fafcff}
-
-    .badge{display:inline-block;padding:2px 10px;border-radius:999px;border:1px solid var(--line);background:#f8fafc;font-size:12px}
-    .meta{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+    /* Empty state */
+    .empty{
+      border: 1px dashed rgba(100,116,139,0.35);
+      background: linear-gradient(180deg, #ffffff, #fbfdff);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      color: var(--muted);
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      margin-top:10px;
+    }
+    .empty .badge{
+      width:34px;height:34px;border-radius:12px;
+      background: rgba(31,111,235,0.10);
+      display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+    }
+    .empty p{margin:0;font-size:14px}
+    .empty .hint{margin-top:6px;font-size:13px;color:#94a3b8}
 
     /* Photos */
     .photos{
-      display:grid;
-      gap:10px;
-      grid-template-columns:repeat(2, 1fr);
+      display:grid; gap:12px;
+      grid-template-columns: repeat(2, 1fr);
+      margin-top:10px;
     }
-    @media(min-width:700px){
-      .photos{grid-template-columns:repeat(3, 1fr);}
-    }
+    @media(min-width:720px){ .photos{grid-template-columns:repeat(3,1fr)} }
+    @media(min-width:1040px){ .photos{grid-template-columns:repeat(4,1fr)} }
+
     .photo{
       border:1px solid var(--line);
-      border-radius:10px;
+      border-radius: var(--radius-sm);
       overflow:hidden;
       background:#fff;
+      box-shadow: 0 10px 24px rgba(15,23,42,0.06);
+      transition: transform .12s ease, box-shadow .12s ease;
     }
-    .photo img{
-      width:100%;
-      height:160px;
-      object-fit:cover;
-      display:block;
+    .photo:hover{transform:translateY(-1px);box-shadow:0 16px 32px rgba(15,23,42,0.08)}
+    .photo img{width:100%;height:160px;object-fit:cover;display:block;background:#f1f5f9}
+    .photo .cap{padding:10px;font-size:12px;color:var(--muted);line-height:1.35}
+    .photo .cap b{color:#334155}
+
+    /* Reports filter (view-only) */
+    .filters{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      margin-top: 10px;
     }
-    .photo .cap{
-      padding:8px 10px;
-      font-size:12px;
-      color:var(--muted);
+    .input{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 14px;
+      min-width: 240px;
+      outline: none;
+      box-shadow: var(--shadow-sm);
     }
+    .select{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+      box-shadow: var(--shadow-sm);
+    }
+    .smallnote{font-size:12px;color:#94a3b8;margin-top:8px}
   </style>
 </head>
 
 <body>
-<div class="container">
+<div class="wrap">
 
-  <nav>
+  <nav aria-label="Primary">
     <a href="{{ url_for('home') }}">Home</a>
     <a href="{{ url_for('beaches') }}">Beaches</a>
     <a href="{{ url_for('swimmer') }}">Swimmer</a>
     <a href="{{ url_for('lifeguard') }}">Lifeguard</a>
     <span class="spacer"></span>
     {% if username %}
-      <span class="who">Logged in as {{ username }}{% if role %} ({{ role }}){% endif %}</span>
+      <span class="who">Logged in as <b style="color:#334155">{{ username }}</b>{% if role %} <span class="muted">({{ role }})</span>{% endif %}</span>
     {% endif %}
   </nav>
 
-  <h1>{{ beach.name }}</h1>
-  <p class="muted">
-    {{ beach.county or "" }}
-    {% if beach.latitude and beach.longitude %}
-      · Lat {{ beach.latitude }} · Lng {{ beach.longitude }}
-    {% endif %}
-  </p>
+  {% set latest_flag = (latest_report.flag_status if latest_report else None) %}
+  {% set flag_lower = (latest_flag|lower if latest_flag else "") %}
+  {% if "green" in flag_lower %}
+    {% set flag_class = "ok" %}
+  {% elif "yellow" in flag_lower or "amber" in flag_lower %}
+    {% set flag_class = "warn" %}
+  {% elif "red" in flag_lower %}
+    {% set flag_class = "danger" %}
+  {% else %}
+    {% set flag_class = "neutral" %}
+  {% endif %}
 
-  <div class="grid grid-2">
+  {% set issues_count = (issues|length if issues else 0) %}
+  {% set reports_count = (reports|length if reports else 0) %}
+  {% set photos_count = (photos|length if photos else 0) %}
 
-    <!-- Latest report -->
-    <section class="card">
-      <h2>Latest Official Report</h2>
-
-      {% if latest_report %}
-        <p class="muted" style="margin:0 0 10px 0">
-          Updated: {{ latest_report.reported_at.strftime("%Y-%m-%d %H:%M") }}
-        </p>
-
+  <section class="hero">
+    <div class="hero-row">
+      <div>
+        <h1>{{ beach.name }}</h1>
         <div class="meta">
-          <span class="badge">Tide: {{ latest_report.tide or "—" }}</span>
-          <span class="badge">Temp: {{ latest_report.temp_c if latest_report.temp_c is not none else "—" }}°C</span>
-          <span class="badge">Flag: {{ latest_report.flag_status or "—" }}</span>
+          {% if beach.county %}
+            <span class="chip">📍 {{ beach.county }}</span>
+          {% endif %}
+          {% if beach.latitude and beach.longitude %}
+            <span class="chip">Coordinates <code>{{ beach.latitude }}</code> <code>{{ beach.longitude }}</code></span>
+          {% endif %}
+          {% if latest_report and latest_report.reported_at %}
+            <span class="chip">Last updated <code>{{ latest_report.reported_at.strftime("%Y-%m-%d %H:%M") }}</code></span>
+          {% else %}
+            <span class="chip">No official report recorded yet</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="label">Flag Status</div>
+        <div class="value">
+          {% if latest_report and latest_report.flag_status %}
+            <span class="pill {{ flag_class }}">{{ latest_report.flag_status }}</span>
+          {% else %}
+            <span class="pill neutral">No report</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="label">Water Temperature</div>
+        <div class="value">
+          {% if latest_report and latest_report.temp_c is not none %}
+            {{ latest_report.temp_c }}°C <span class="kpi">latest</span>
+          {% else %}
+            <span class="muted">—</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="label">Tide</div>
+        <div class="value">
+          {% if latest_report and latest_report.tide %}
+            {{ latest_report.tide }} <span class="kpi">latest</span>
+          {% else %}
+            <span class="muted">—</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="label">Open Issues</div>
+        <div class="value">
+          {{ issues_count }} <span class="kpi">active</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid two">
+
+    <!-- LEFT -->
+    <div class="grid" style="margin-top:0">
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>Latest Official Report</h2>
+            <div class="card-sub">Most recent lifeguard update for this beach.</div>
+          </div>
+          <div class="card-sub">
+            {% if latest_report and latest_report.reported_at %}
+              Updated <span class="td-mono">{{ latest_report.reported_at.strftime("%Y-%m-%d %H:%M") }}</span>
+            {% endif %}
+          </div>
         </div>
 
-        <p style="margin:10px 0 0 0"><b>Notes:</b> {{ latest_report.notes or "" }}</p>
-      {% else %}
-        <p class="muted">No report yet for this beach.</p>
-      {% endif %}
-    </section>
+        {% if latest_report %}
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+            <span class="pill {{ flag_class }}">Flag: {{ latest_report.flag_status or "—" }}</span>
+            <span class="kpi">Tide: {{ latest_report.tide or "—" }}</span>
+            <span class="kpi">Temp: {{ latest_report.temp_c if latest_report.temp_c is not none else "—" }}°C</span>
+          </div>
 
-    <!-- Issues -->
-    <section class="card">
-      <h2>Open Swimmer Issues</h2>
-
-      {% if issues and issues|length > 0 %}
-        <table>
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Type</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for i in issues %}
-              <tr>
-                <td>{{ i.submitted_at.strftime("%Y-%m-%d %H:%M") }}</td>
-                <td>{{ i.issue_type or "—" }}</td>
-                <td>{{ i.description or "" }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <p class="muted">No open issues for this beach.</p>
-      {% endif %}
-    </section>
-
-  </div>
-
-  <!-- Photos -->
-  <section class="card" style="margin-top:14px;">
-    <h2>Photos (Lifeguard Uploads)</h2>
-
-    {% set pics = photos|default([]) %}
-    {% if pics and pics|length > 0 %}
-      <div class="photos">
-        {% for p in pics %}
-          <div class="photo">
-            <!-- p.file_path should be something like: uploads/filename.jpg -->
-            <img src="{{ url_for('static', filename=p.file_path) }}" alt="Beach photo">
-            <div class="cap">
-              {% if p.uploaded_at %}
-                Uploaded: {{ p.uploaded_at.strftime("%Y-%m-%d %H:%M") }}
-              {% else %}
-                Uploaded
-              {% endif %}
-              {% if p.caption %} · {{ p.caption }}{% endif %}
+          {% if latest_report.notes %}
+            <div style="margin-top:12px;line-height:1.6">
+              <b style="color:#334155">Notes</b><br/>
+              {{ latest_report.notes }}
+            </div>
+          {% else %}
+            <div class="smallnote">No notes provided on the latest report.</div>
+          {% endif %}
+        {% else %}
+          <div class="empty">
+            <div class="badge" aria-hidden="true">ℹ️</div>
+            <div>
+              <p><b>No official report yet.</b> This beach has no lifeguard report recorded.</p>
+              <div class="hint">If you are a lifeguard, reports are submitted from the Lifeguard page.</div>
             </div>
           </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <p class="muted">No photos yet for this beach.</p>
-    {% endif %}
-  </section>
+        {% endif %}
+      </section>
 
-  <!-- Recent reports -->
-  <section class="card" style="margin-top:14px;">
-    <h2>Recent Reports ({{ beach.name }})</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>Tide</th>
-          <th>Temp °C</th>
-          <th>Flag</th>
-          <th>Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in reports %}
-          <tr>
-            <td>{{ r.reported_at.strftime("%Y-%m-%d %H:%M") }}</td>
-            <td>{{ r.tide or "—" }}</td>
-            <td>{{ r.temp_c if r.temp_c is not none else "—" }}</td>
-            <td>{{ r.flag_status or "—" }}</td>
-            <td>{{ r.notes or "" }}</td>
-          </tr>
+      <section class="card" id="recent-reports">
+        <div class="card-head">
+          <div>
+            <h2>Recent Reports</h2>
+            <div class="card-sub">Browse historical reports for {{ beach.name }}.</div>
+          </div>
+          <div class="card-sub">{{ reports_count }} total</div>
+        </div>
+
+        <div class="filters" aria-label="Report filters">
+          <input class="input" id="reportSearch" type="search" placeholder="Search notes, tide, flag, temp…" aria-label="Search reports">
+          <select class="select" id="flagFilter" aria-label="Filter by flag">
+            <option value="">All flags</option>
+            <option value="green">Green</option>
+            <option value="yellow">Yellow / Amber</option>
+            <option value="red">Red</option>
+          </select>
+        </div>
+        <div class="smallnote">Filters are view-only and run in your browser (no data is changed).</div>
+
+        <div class="table-wrap" role="region" aria-label="Recent reports table" tabindex="0">
+          <table id="reportsTable">
+            <thead>
+              <tr>
+                <th style="min-width:155px;">Time</th>
+                <th style="min-width:120px;">Tide</th>
+                <th style="min-width:110px;">Temp °C</th>
+                <th style="min-width:140px;">Flag</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in reports %}
+                {% set fl = (r.flag_status|lower if r.flag_status else "") %}
+                {% if "green" in fl %}
+                  {% set row_class = "ok" %}
+                {% elif "yellow" in fl or "amber" in fl %}
+                  {% set row_class = "warn" %}
+                {% elif "red" in fl %}
+                  {% set row_class = "danger" %}
+                {% else %}
+                  {% set row_class = "neutral" %}
+                {% endif %}
+                <tr data-flag="{{ fl }}">
+                  <td class="td-mono">{{ r.reported_at.strftime("%Y-%m-%d %H:%M") }}</td>
+                  <td>{{ r.tide or "—" }}</td>
+                  <td>{{ r.temp_c if r.temp_c is not none else "—" }}</td>
+                  <td><span class="pill {{ row_class }}">{{ r.flag_status or "—" }}</span></td>
+                  <td>{{ r.notes or "" }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="5" class="muted" style="padding:14px;">No reports yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- RIGHT -->
+    <div class="grid" style="margin-top:0">
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>Open Swimmer Issues</h2>
+            <div class="card-sub">Active concerns raised by swimmers for this beach.</div>
+          </div>
+          <div class="card-sub">{{ issues_count }} open</div>
+        </div>
+
+        {% if issues and issues|length > 0 %}
+          <div class="table-wrap" role="region" aria-label="Open issues table" tabindex="0">
+            <table>
+              <thead>
+                <tr>
+                  <th style="min-width:155px;">Time</th>
+                  <th style="min-width:140px;">Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for i in issues %}
+                  <tr>
+                    <td class="td-mono">{{ i.submitted_at.strftime("%Y-%m-%d %H:%M") }}</td>
+                    <td>{{ i.issue_type or "—" }}</td>
+                    <td>{{ i.description or "" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         {% else %}
-          <tr><td colspan="5" class="muted">No reports yet.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
+          <div class="empty">
+            <div class="badge" aria-hidden="true">✅</div>
+            <div>
+              <p><b>No open issues.</b> There are currently no active swimmer-reported concerns.</p>
+              <div class="hint">Issues are submitted from the Swimmer page.</div>
+            </div>
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>Photos</h2>
+            <div class="card-sub">Lifeguard uploads for entry points and visual conditions.</div>
+          </div>
+          <div class="card-sub">{{ photos_count }} uploaded</div>
+        </div>
+
+        {% set pics = photos|default([]) %}
+        {% if pics and pics|length > 0 %}
+          <div class="photos" aria-label="Photo gallery">
+            {% for p in pics %}
+              <figure class="photo">
+                <img src="{{ url_for('static', filename=p.file_path) }}" alt="Beach photo">
+                <figcaption class="cap">
+                  <div><b>{{ p.caption if p.caption else "Beach photo" }}</b></div>
+                  <div>
+                    {% if p.uploaded_at %}
+                      Uploaded <span class="td-mono">{{ p.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</span>
+                    {% else %}
+                      Uploaded
+                    {% endif %}
+                  </div>
+                </figcaption>
+              </figure>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty">
+            <div class="badge" aria-hidden="true">📷</div>
+            <div>
+              <p><b>No photos yet.</b> Photos are added by lifeguards when available.</p>
+              <div class="hint">Uploads are managed from the Lifeguard page.</div>
+            </div>
+          </div>
+        {% endif %}
+      </section>
+
+    </div>
+  </div>
 
 </div>
+
+<script>
+  // View-only: client-side search + filter for Recent Reports
+  (function(){
+    const search = document.getElementById("reportSearch");
+    const filter = document.getElementById("flagFilter");
+    const table = document.getElementById("reportsTable");
+    if(!search || !filter || !table) return;
+
+    const rows = Array.from(table.querySelectorAll("tbody tr"));
+
+    function normalize(s){ return (s || "").toLowerCase().trim(); }
+
+    function apply(){
+      const q = normalize(search.value);
+      const f = normalize(filter.value);
+
+      rows.forEach(row => {
+        const text = normalize(row.innerText);
+        const flag = normalize(row.getAttribute("data-flag"));
+
+        const matchesQ = !q || text.includes(q);
+        const matchesF = !f || flag.includes(f); // contains 'green', 'yellow', 'amber', 'red'
+        row.style.display = (matchesQ && matchesF) ? "" : "none";
+      });
+    }
+
+    search.addEventListener("input", apply);
+    filter.addEventListener("change", apply);
+  })();
+</script>
+
 </body>
 </html>
