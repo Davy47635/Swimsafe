@@ -6,6 +6,7 @@
 from datetime import datetime, timedelta
 import os
 import requests
+from typing import Optional, Dict, Any  # ✅ Python 3.9-compatible typing
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
@@ -50,7 +51,13 @@ db = SQLAlchemy(app)
 
 STORMGLASS_API_KEY = os.getenv("STORMGLASS_API_KEY", "").strip()
 print("Stormglass key loaded:", bool(STORMGLASS_API_KEY))
+
+# Weather/marine point (what you already use)
 STORMGLASS_ENDPOINT = "https://api.stormglass.io/v2/weather/point"
+
+# Tide endpoints (sea-level + extremes)
+STORMGLASS_TIDE_SEA_LEVEL_ENDPOINT = "https://api.stormglass.io/v2/tide/sea-level/point"
+STORMGLASS_TIDE_EXTREMES_ENDPOINT = "https://api.stormglass.io/v2/tide/extremes/point"
 
 # ================================
 # UPLOADS (Beach photos)
@@ -63,11 +70,10 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 def allowed_file(filename: str) -> bool:
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-
-
+    if not filename or "." not in filename:
+        return False
+    ext = filename.rsplit(".", 1)[1].lower()
+    return ext in ALLOWED_EXTENSIONS
 
 
 # ---- Models ----
@@ -113,7 +119,7 @@ class User(db.Model):
     role = db.Column(db.String(20), nullable=False)       # swimmer or lifeguard
 
 
-# ---- NEW: Beach Photos ----
+# ---- Beach Photos ----
 class BeachPhoto(db.Model):
     __tablename__ = "beach_photos"
     id = db.Column(db.Integer, primary_key=True)
@@ -139,13 +145,6 @@ def login_required(role=None):
     return r == role
 
 
-def allowed_file(filename: str) -> bool:
-    if not filename or "." not in filename:
-        return False
-    ext = filename.rsplit(".", 1)[1].lower()
-    return ext in ALLOWED_EXTENSIONS
-
-
 def _safe_hour_value(hour: dict, key: str):
     """
     Stormglass v2 returns values as objects keyed by source
@@ -167,8 +166,27 @@ def _safe_hour_value(hour: dict, key: str):
         return None
 
 
-def get_marine_conditions(lat: float, lng: float):
+def _stormglass_headers():
+    return {"Authorization": STORMGLASS_API_KEY}
 
+
+def _utc_hour_str(dt: datetime) -> str:
+    """
+    Stormglass tide endpoints accept start/end like 'YYYY-MM-DDTHH' in UTC.
+    We round down to the hour to keep it simple & predictable.
+    """
+    dt2 = dt.replace(minute=0, second=0, microsecond=0)
+    return dt2.strftime("%Y-%m-%dT%H")
+
+
+def _to_float(x):
+    try:
+        return float(x)
+    except Exception:
+        return None
+
+
+def get_marine_conditions(lat: float, lng: float):
     """
     Fetch current-ish marine conditions from Stormglass using lat/lng.
     Returns a dict or None.
@@ -176,6 +194,7 @@ def get_marine_conditions(lat: float, lng: float):
     if not STORMGLASS_API_KEY:
         return None
 
+    # Added currents where available (plan/coverage dependent).
     params = ",".join([
         "waveHeight",
         "waveDirection",
@@ -185,9 +204,10 @@ def get_marine_conditions(lat: float, lng: float):
         "windSpeed",
         "windDirection",
         "waterTemperature",
+        "currentSpeed",
+        "currentDirection",
     ])
 
-    # IMPORTANT: give Stormglass a short time window, otherwise you may get empty hours
     now = datetime.utcnow()
     start = int(now.timestamp())
     end = int((now + timedelta(hours=1)).timestamp())
@@ -203,7 +223,7 @@ def get_marine_conditions(lat: float, lng: float):
                 "start": start,
                 "end": end,
             },
-            headers={"Authorization": STORMGLASS_API_KEY},
+            headers=_stormglass_headers(),
             timeout=10,
         )
 
@@ -228,11 +248,191 @@ def get_marine_conditions(lat: float, lng: float):
             "wind_speed": _safe_hour_value(hour0, "windSpeed"),
             "wind_direction": _safe_hour_value(hour0, "windDirection"),
             "water_temp": _safe_hour_value(hour0, "waterTemperature"),
+            "current_speed": _safe_hour_value(hour0, "currentSpeed"),
+            "current_direction": _safe_hour_value(hour0, "currentDirection"),
             "time": hour0.get("time"),
         }
 
     except Exception:
         return None
+
+
+def get_tide_sea_level(lat: float, lng: float, start_dt: datetime, end_dt: datetime, datum: str = "MSL"):
+    """
+    Tide Sea Level endpoint: returns hourly sea level in meters.
+    Stormglass expects start/end like YYYY-MM-DDTHH (UTC).
+    """
+    if not STORMGLASS_API_KEY:
+        return None
+
+    try:
+        r = requests.get(
+            STORMGLASS_TIDE_SEA_LEVEL_ENDPOINT,
+            params={
+                "lat": lat,
+                "lng": lng,
+                "start": _utc_hour_str(start_dt),
+                "end": _utc_hour_str(end_dt),
+                "datum": datum,
+            },
+            headers=_stormglass_headers(),
+            timeout=10,
+        )
+
+        print("Stormglass tide sea-level:", r.status_code, r.text[:200])
+
+        if r.status_code != 200:
+            return None
+
+        data = r.json()
+        return data.get("data", []) or None
+
+    except Exception:
+        return None
+
+
+def get_tide_extremes(lat: float, lng: float, start_dt: datetime, end_dt: datetime, datum: str = "MSL"):
+    """
+    Tide Extremes endpoint: returns times & heights for high/low tides.
+    """
+    if not STORMGLASS_API_KEY:
+        return None
+
+    try:
+        r = requests.get(
+            STORMGLASS_TIDE_EXTREMES_ENDPOINT,
+            params={
+                "lat": lat,
+                "lng": lng,
+                "start": _utc_hour_str(start_dt),
+                "end": _utc_hour_str(end_dt),
+                "datum": datum,
+            },
+            headers=_stormglass_headers(),
+            timeout=10,
+        )
+
+        print("Stormglass tide extremes:", r.status_code, r.text[:200])
+
+        if r.status_code != 200:
+            return None
+
+        data = r.json()
+        return data.get("data", []) or None
+
+    except Exception:
+        return None
+
+
+def compute_tide_assist(
+    lat: float,
+    lng: float,
+    marine_data: Optional[Dict[str, Any]] = None
+) -> Optional[Dict[str, str]]:
+    """
+    Returns:
+      {
+        "tide_state": "Rising/Falling/High/Low",
+        "tide_strength": "Weak/Moderate/Strong",
+        "tide_basis": "...",
+      }
+    Safe fallbacks: returns None if not enough data / no API key.
+    """
+    if not STORMGLASS_API_KEY:
+        return None
+
+    now = datetime.utcnow()
+
+    # 1) Sea level for now & +1h (direction + fallback strength)
+    sea = get_tide_sea_level(lat, lng, now, now + timedelta(hours=2))
+
+    sea_now = None
+    sea_next = None
+
+    if sea and len(sea) >= 2:
+        # Stormglass typically returns items like {"time":"...","sg":1.23}
+        def extract_height(item: dict):
+            if not isinstance(item, dict):
+                return None
+            if "sg" in item:
+                return _to_float(item.get("sg"))
+            # fallback keys (just in case)
+            return _to_float(item.get("height") or item.get("value") or item.get("seaLevel"))
+
+        sea_now = extract_height(sea[0])
+        sea_next = extract_height(sea[1])
+
+    delta_m = None
+    if sea_now is not None and sea_next is not None:
+        delta_m = sea_next - sea_now  # approx per hour
+
+    # 2) Extremes: nearest extreme within 60 minutes → High/Low
+    extremes = get_tide_extremes(lat, lng, now - timedelta(hours=3), now + timedelta(hours=9))
+    nearest = None
+
+    if extremes:
+        for e in extremes:
+            try:
+                t_str = e.get("time")
+                if not t_str:
+                    continue
+                t = datetime.fromisoformat(t_str.replace("Z", "+00:00")).replace(tzinfo=None)
+                diff = abs((t - now).total_seconds())
+                if nearest is None or diff < nearest["diff"]:
+                    nearest = {
+                        "diff": diff,
+                        "type": (e.get("type") or "").lower(),
+                        "time": t_str,
+                        "height": e.get("height"),
+                    }
+            except Exception:
+                continue
+
+    tide_state = None
+
+    if nearest and nearest["type"] in {"high", "low"} and nearest["diff"] <= 60 * 60:
+        tide_state = "High" if nearest["type"] == "high" else "Low"
+    else:
+        if delta_m is not None:
+            tide_state = "Rising" if delta_m >= 0 else "Falling"
+
+    tide_strength = None
+    tide_basis = None
+
+    # Prefer currentSpeed if present
+    current_speed = None
+    if marine_data:
+        current_speed = _to_float(marine_data.get("current_speed"))
+
+    if current_speed is not None:
+        if current_speed >= 0.8:
+            tide_strength = "Strong"
+        elif current_speed >= 0.3:
+            tide_strength = "Moderate"
+        else:
+            tide_strength = "Weak"
+        tide_basis = f"currentSpeed {current_speed:.2f} m/s"
+    else:
+        if delta_m is not None:
+            rate = abs(delta_m)  # m/hr proxy
+            if rate >= 0.15:
+                tide_strength = "Strong"
+            elif rate >= 0.05:
+                tide_strength = "Moderate"
+            else:
+                tide_strength = "Weak"
+            tide_basis = f"Δsea level {rate:.2f} m/hr (proxy)"
+        else:
+            tide_basis = "no tide data available"
+
+    if not tide_state and not tide_strength:
+        return None
+
+    return {
+        "tide_state": tide_state or "",
+        "tide_strength": tide_strength or "",
+        "tide_basis": tide_basis or "",
+    }
 
 
 def build_safety_advisory(api_data: dict):
@@ -243,48 +443,32 @@ def build_safety_advisory(api_data: dict):
     if not api_data:
         return None
 
-    wave_h = api_data.get("wave_height")
-    wind_s = api_data.get("wind_speed")
-    wave_p = api_data.get("wave_period")
-
-    # Convert to floats where possible
-    def to_float(x):
-        try:
-            return float(x)
-        except Exception:
-            return None
-
-    wave_h = to_float(wave_h)
-    wind_s = to_float(wind_s)
-    wave_p = to_float(wave_p)
+    wave_h = _to_float(api_data.get("wave_height"))
+    wind_s = _to_float(api_data.get("wind_speed"))
+    wave_p = _to_float(api_data.get("wave_period"))
 
     reasons = []
     level = "Low risk"
     level_class = "low"
 
-    # --- RULES ---
-    # Wave height
     if wave_h is not None:
         if wave_h > 2.5:
             reasons.append(f"Wave height {wave_h:.1f}m is above unsafe threshold (2.5m).")
         elif wave_h > 1.5:
             reasons.append(f"Wave height {wave_h:.1f}m is above caution threshold (1.5m).")
 
-    # Wind speed (m/s)
     if wind_s is not None:
         if wind_s > 14:
             reasons.append(f"Wind speed {wind_s:.1f}m/s is above unsafe threshold (14m/s).")
         elif wind_s > 9:
             reasons.append(f"Wind speed {wind_s:.1f}m/s is above caution threshold (9m/s).")
 
-    # Long-period swell (more powerful waves)
     if wave_p is not None and wave_h is not None:
         if wave_p > 14 and wave_h > 1.5:
             reasons.append(f"Long wave period {wave_p:.0f}s with wave height {wave_h:.1f}m suggests powerful swell.")
         elif wave_p > 12 and wave_h > 1.2:
             reasons.append(f"Wave period {wave_p:.0f}s with wave height {wave_h:.1f}m suggests stronger sets.")
 
-    # Determine final level based on strongest trigger
     unsafe_hit = any("unsafe threshold" in r for r in reasons)
     caution_hit = (not unsafe_hit) and len(reasons) > 0
 
@@ -298,7 +482,6 @@ def build_safety_advisory(api_data: dict):
         level = "LOW RISK"
         level_class = "low"
 
-    # If we literally got no usable numbers
     if wave_h is None and wind_s is None and wave_p is None:
         return {
             "level": "NO DATA",
@@ -313,7 +496,7 @@ def build_safety_advisory(api_data: dict):
     }
 
 
-# ---- Register (NEW) ----
+# ---- Register ----
 ALLOWED_ROLES = {"swimmer", "lifeguard"}
 
 @app.route("/register", methods=["GET", "POST"])
@@ -462,7 +645,7 @@ def beach_detail(beach_id):
     )
 
 
-# ---- NEW: Serve uploaded files (kept behind login) ----
+# ---- Serve uploaded files (kept behind login) ----
 @app.get("/uploads/<path:filename>")
 def uploaded_file(filename):
     if not login_required():
@@ -470,7 +653,7 @@ def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 
-# ---- NEW: Lifeguard uploads a photo for a beach ----
+# ---- Lifeguard uploads a photo for a beach ----
 @app.post("/beach/<int:beach_id>/photo")
 def upload_beach_photo(beach_id):
     if not login_required(role="lifeguard"):
@@ -484,7 +667,7 @@ def upload_beach_photo(beach_id):
         return redirect(url_for("beach_detail", beach_id=beach.id))
 
     if not allowed_file(f.filename):
-        flash("Invalid file type. Use png/jpg/jpeg/gif/webp.", "error")
+        flash("Invalid file type. Use png/jpg/jpeg.", "error")
         return redirect(url_for("beach_detail", beach_id=beach.id))
 
     try:
@@ -542,19 +725,28 @@ def lifeguard():
     reports = SeaReport.query.order_by(SeaReport.reported_at.desc()).limit(20).all()
     issues = SwimmerIssue.query.filter_by(resolved=False).order_by(SwimmerIssue.submitted_at.desc()).all()
 
-    # API: optional load by selected beach
     api_data = None
     selected_beach_id = request.args.get("beach_id", "").strip()
-
-    # ✅ NEW: advisory output for option A
     advisory = None
 
     if selected_beach_id.isdigit():
         b = Beach.query.get(int(selected_beach_id))
         if b and b.latitude is not None and b.longitude is not None:
-            api_data = get_marine_conditions(float(b.latitude), float(b.longitude))
-            # ✅ NEW: build advisory from API data
-            advisory = build_safety_advisory(api_data)
+            lat = float(b.latitude)
+            lng = float(b.longitude)
+
+            api_data = get_marine_conditions(lat, lng)
+            tide = compute_tide_assist(lat, lng, marine_data=api_data)
+
+            if api_data is None:
+                api_data = {}
+
+            if tide:
+                api_data["tide_state"] = tide.get("tide_state", "")
+                api_data["tide_strength"] = tide.get("tide_strength", "")
+                api_data["tide_basis"] = tide.get("tide_basis", "")
+
+            advisory = build_safety_advisory(api_data if api_data else None)
         else:
             flash("Selected beach has no latitude/longitude saved.", "error")
 
@@ -566,7 +758,6 @@ def lifeguard():
         role=current_user_role(),
         api_data=api_data,
         selected_beach_id=selected_beach_id,
-        # ✅ NEW: pass advisory to template
         advisory=advisory
     )
 
@@ -585,10 +776,8 @@ def create_report():
         flag_status = request.form.get("flag_status") or None
         notes = request.form.get("notes") or None
 
-        # ✅ ADDED: get advisory level from hidden field
         advisory_level = request.form.get("advisory_level")
 
-        # ✅ ADDED: append advisory into notes (does NOT overwrite existing notes)
         if advisory_level:
             advisory_text = f"[API ADVISORY: {advisory_level}]"
             if notes:
@@ -716,8 +905,10 @@ def resolve_issue(issue_id):
 
     return redirect(url_for("lifeguard"))
 
+
 with app.app_context():
     db.create_all()
 
 if __name__ == "__main__":
     app.run(debug=True)
+

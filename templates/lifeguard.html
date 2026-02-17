@@ -413,6 +413,67 @@
     }
     .pill2 strong{ color: var(--text); font-weight: 900; }
 
+    /* NEW: Tide Assist (form-side, view-only) */
+    .tide-assist{
+      display:none;
+      margin-top: 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(7,18,37,.28);
+      padding: 12px;
+      box-shadow: var(--shadow2);
+    }
+    .tide-assist-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .tide-assist-title{
+      font-size: 12px;
+      font-weight: 1000;
+      letter-spacing: .2px;
+      color: var(--text);
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .tide-assist-title .tiny{
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: rgba(76,201,240,.95);
+      box-shadow: 0 0 0 4px rgba(76,201,240,.14);
+    }
+    .tide-tags{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .tag strong{ color: var(--text); font-weight: 1000; }
+    .tag.ok{ border-color: rgba(45,212,191,.35); background: rgba(45,212,191,.12); }
+    .tag.warn{ border-color: rgba(255,209,102,.35); background: rgba(255,209,102,.12); }
+    .tag.bad{ border-color: rgba(255,93,108,.35); background: rgba(255,93,108,.12); }
+    .tide-assist-note{
+      color: rgba(188,208,243,.75);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
     /* Tables */
     .section{
       margin-top: 16px;
@@ -602,6 +663,20 @@
               </select>
             </div>
 
+            <!-- NEW: Tide Assist (view-only, appears when API provides tide info) -->
+            <div class="tide-assist" id="tideAssist" aria-live="polite">
+              <div class="tide-assist-head">
+                <div class="tide-assist-title">
+                  <span class="tiny" aria-hidden="true"></span>
+                  Tide assist (API-derived)
+                </div>
+                <div class="tide-tags" id="tideTags"></div>
+              </div>
+              <div class="tide-assist-note" id="tideAssistNote">
+                Derived from live conditions where available (decision-support only). Lifeguard judgement remains final.
+              </div>
+            </div>
+
             <label for="temp_c">Water Temperature (°C)</label>
             <div class="field">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2a3 3 0 00-3 3v8.1a4 4 0 106 3.4V5a3 3 0 00-3-3zm1 14.5a2 2 0 11-4 0c0-.7.4-1.3 1-1.7V5a1 1 0 112 0v9.8c.6.4 1 1 1 1.7z"/></svg>
@@ -699,6 +774,15 @@
               <div><strong style="color: var(--text);">Wind speed:</strong> {{ api_data.wind_speed if api_data.wind_speed is not none else "—" }} m/s</div>
               <div><strong style="color: var(--text);">Wind direction:</strong> {{ api_data.wind_direction if api_data.wind_direction is not none else "—" }}°</div>
               <div><strong style="color: var(--text);">Water temperature:</strong> {{ api_data.water_temp if api_data.water_temp is not none else "—" }} °C</div>
+
+              <!-- OPTIONAL (will show once backend provides) -->
+              {% if api_data.tide_state %}
+                <div><strong style="color: var(--text);">Tide (derived):</strong> {{ api_data.tide_state }}{% if api_data.tide_strength %} ({{ api_data.tide_strength }}){% endif %}</div>
+              {% endif %}
+              {% if api_data.tide_basis %}
+                <div class="muted" style="font-size:12px;">Tide basis: {{ api_data.tide_basis }}</div>
+              {% endif %}
+
               {% if api_data.time %}
                 <div class="muted" style="font-size:12px;">API time: {{ api_data.time }}</div>
               {% endif %}
@@ -736,7 +820,13 @@
                  data-wind-speed="{{ api_data.wind_speed if api_data.wind_speed is not none else '' }}"
                  data-wind-direction="{{ api_data.wind_direction if api_data.wind_direction is not none else '' }}"
                  data-water-temp="{{ api_data.water_temp if api_data.water_temp is not none else '' }}"
-                 data-api-time="{{ api_data.time or '' }}">
+                 data-api-time="{{ api_data.time or '' }}"
+
+                 <!-- NEW: tide fields (backend can add these later) -->
+                 data-tide-state="{{ api_data.tide_state or '' }}"
+                 data-tide-strength="{{ api_data.tide_strength or '' }}"
+                 data-tide-basis="{{ api_data.tide_basis or '' }}"
+            >
               <h3>API Assist</h3>
 
               <div class="pill2">
@@ -887,10 +977,85 @@
       const btnUseApi = document.getElementById("btnUseApi");
       const btnCopyNotes = document.getElementById("btnCopyNotes");
 
+      // Tide assist UI hooks (form-side)
+      const tideAssistBox = document.getElementById("tideAssist");
+      const tideTags = document.getElementById("tideTags");
+
+      function norm(s){ return (s || "").toString().trim(); }
+
+      function classifyStrength(strength) {
+        // purely for badge colour in UI; backend supplies the words
+        const s = (strength || "").toLowerCase();
+        if (s.includes("strong")) return "bad";
+        if (s.includes("moderate")) return "warn";
+        if (s.includes("weak") || s.includes("slack")) return "ok";
+        return "";
+      }
+
+      function setTideDropdown(state) {
+        const tideSelect = document.getElementById("tide");
+        if (!tideSelect) return;
+
+        const s = (state || "").toLowerCase().trim();
+        const mapping = {
+          "rising": "Rising",
+          "falling": "Falling",
+          "high": "High",
+          "low": "Low"
+        };
+
+        const v = mapping[s];
+        if (!v) return;
+
+        tideSelect.value = v;
+        tideSelect.dispatchEvent(new Event("input", { bubbles: true }));
+        tideSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+
+      function showTideAssistUI(state, strength, basis) {
+        if (!tideAssistBox || !tideTags) return;
+
+        const st = norm(state);
+        const sp = norm(strength);
+        const bs = norm(basis);
+
+        if (!st && !sp && !bs) {
+          tideAssistBox.style.display = "none";
+          tideTags.innerHTML = "";
+          return;
+        }
+
+        const tags = [];
+
+        if (st) {
+          tags.push(`<span class="tag"><strong>Tide</strong> ${st}</span>`);
+        }
+        if (sp) {
+          const cls = classifyStrength(sp);
+          tags.push(`<span class="tag ${cls}"><strong>Strength</strong> ${sp}</span>`);
+        }
+        if (bs) {
+          tags.push(`<span class="tag"><strong>Basis</strong> ${bs}</span>`);
+        }
+
+        tideTags.innerHTML = tags.join("");
+        tideAssistBox.style.display = "block";
+      }
+
       function buildApiSummary() {
         const d = assist.dataset;
 
         const parts = [];
+
+        // NEW: include tide in summary (if provided)
+        if (d.tideState || d.tideStrength) {
+          const t = [];
+          if (d.tideState) t.push(d.tideState);
+          if (d.tideStrength) t.push(d.tideStrength);
+          const extra = d.tideBasis ? ` [${d.tideBasis}]` : "";
+          parts.push(`Tide: ${t.join(" / ")}${extra}`);
+        }
+
         if (d.waveHeight) parts.push(`Wave: ${Number(d.waveHeight).toFixed(2)}m`);
         if (d.waveDirection) parts.push(`Wave dir: ${Number(d.waveDirection).toFixed(0)}°`);
         if (d.wavePeriod) parts.push(`Wave period: ${Number(d.wavePeriod).toFixed(1)}s`);
@@ -921,6 +1086,10 @@
         if (d.waterTemp) setValueById("temp_c", Number(d.waterTemp).toFixed(1));
         if (d.advisoryLevel) setValueById("advisory_level", d.advisoryLevel);
 
+        // NEW: auto-fill tide dropdown + show tide assist (if backend provided)
+        if (d.tideState) setTideDropdown(d.tideState);
+        showTideAssistUI(d.tideState, d.tideStrength, d.tideBasis);
+
         const notesEl = document.getElementById("notes");
         const summary = buildApiSummary();
         if (notesEl && summary) {
@@ -932,6 +1101,11 @@
       }
 
       function copyApiSummaryOnly() {
+        const d = assist.dataset;
+
+        // NEW: show tide assist even if you only copy notes (nice UX)
+        showTideAssistUI(d.tideState, d.tideStrength, d.tideBasis);
+
         const notesEl = document.getElementById("notes");
         const summary = buildApiSummary();
         if (!notesEl || !summary) return;
@@ -946,6 +1120,12 @@
         try { navigator.clipboard && navigator.clipboard.writeText(summary); } catch (e) {}
       }
 
+      // On page load: if API already contains tide values, show the panel immediately
+      (function initTideAssistFromDataset(){
+        const d = assist.dataset;
+        showTideAssistUI(d.tideState, d.tideStrength, d.tideBasis);
+      })();
+
       if (btnUseApi) btnUseApi.addEventListener("click", useSuggestedValues);
       if (btnCopyNotes) btnCopyNotes.addEventListener("click", copyApiSummaryOnly);
     })();
@@ -953,3 +1133,4 @@
 
 </body>
 </html>
+
