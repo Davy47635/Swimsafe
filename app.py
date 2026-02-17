@@ -786,6 +786,16 @@ def create_report():
             else:
                 notes = advisory_text
 
+        # ✅ NEW: also store tide strength into the report (Option A)
+        tide_strength = (request.form.get("tide_strength") or "").strip()
+        if tide_strength:
+            tide_text = f"[TIDE STRENGTH: {tide_strength}]"
+            if notes:
+                if tide_text not in notes:
+                    notes = notes + "\n" + tide_text
+            else:
+                notes = tide_text
+
         report = SeaReport(
             beach_id=beach_id,
             tide=tide,

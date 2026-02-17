@@ -413,7 +413,7 @@
     }
     .pill2 strong{ color: var(--text); font-weight: 900; }
 
-    /* NEW: Tide Assist (form-side, view-only) */
+    /* Tide Assist */
     .tide-assist{
       display:none;
       margin-top: 10px;
@@ -507,12 +507,6 @@
     }
     .muted{ color: var(--muted); }
     .nowrap{ white-space: nowrap; }
-    .actions{
-      display:flex;
-      gap: 10px;
-      align-items:center;
-      flex-wrap: wrap;
-    }
     .link{
       color: rgba(76,201,240,.95);
       font-weight: 900;
@@ -663,7 +657,7 @@
               </select>
             </div>
 
-            <!-- NEW: Tide Assist (view-only, appears when API provides tide info) -->
+            <!-- Tide Assist (view-only) -->
             <div class="tide-assist" id="tideAssist" aria-live="polite">
               <div class="tide-assist-head">
                 <div class="tide-assist-title">
@@ -701,8 +695,9 @@
               <textarea id="notes" name="notes" rows="3" maxlength="255" placeholder="Optional: hazards, visibility, currents, closures..."></textarea>
             </div>
 
-            <!-- hidden field to send advisory into create_report() -->
+            <!-- hidden fields to send advisory + tide strength into create_report() -->
             <input type="hidden" id="advisory_level" name="advisory_level" value="">
+            <input type="hidden" id="tide_strength" name="tide_strength" value="">
 
             <div class="btn-row">
               <button class="btn btn-primary" type="submit">Save Report</button>
@@ -775,7 +770,6 @@
               <div><strong style="color: var(--text);">Wind direction:</strong> {{ api_data.wind_direction if api_data.wind_direction is not none else "—" }}°</div>
               <div><strong style="color: var(--text);">Water temperature:</strong> {{ api_data.water_temp if api_data.water_temp is not none else "—" }} °C</div>
 
-              <!-- OPTIONAL (will show once backend provides) -->
               {% if api_data.tide_state %}
                 <div><strong style="color: var(--text);">Tide (derived):</strong> {{ api_data.tide_state }}{% if api_data.tide_strength %} ({{ api_data.tide_strength }}){% endif %}</div>
               {% endif %}
@@ -821,8 +815,6 @@
                  data-wind-direction="{{ api_data.wind_direction if api_data.wind_direction is not none else '' }}"
                  data-water-temp="{{ api_data.water_temp if api_data.water_temp is not none else '' }}"
                  data-api-time="{{ api_data.time or '' }}"
-
-                 <!-- NEW: tide fields (backend can add these later) -->
                  data-tide-state="{{ api_data.tide_state or '' }}"
                  data-tide-strength="{{ api_data.tide_strength or '' }}"
                  data-tide-basis="{{ api_data.tide_basis or '' }}"
@@ -984,7 +976,6 @@
       function norm(s){ return (s || "").toString().trim(); }
 
       function classifyStrength(strength) {
-        // purely for badge colour in UI; backend supplies the words
         const s = (strength || "").toLowerCase();
         if (s.includes("strong")) return "bad";
         if (s.includes("moderate")) return "warn";
@@ -1044,10 +1035,8 @@
 
       function buildApiSummary() {
         const d = assist.dataset;
-
         const parts = [];
 
-        // NEW: include tide in summary (if provided)
         if (d.tideState || d.tideStrength) {
           const t = [];
           if (d.tideState) t.push(d.tideState);
@@ -1086,7 +1075,9 @@
         if (d.waterTemp) setValueById("temp_c", Number(d.waterTemp).toFixed(1));
         if (d.advisoryLevel) setValueById("advisory_level", d.advisoryLevel);
 
-        // NEW: auto-fill tide dropdown + show tide assist (if backend provided)
+        // ✅ NEW: push tide strength into hidden field so it saves in report
+        if (d.tideStrength) setValueById("tide_strength", d.tideStrength);
+
         if (d.tideState) setTideDropdown(d.tideState);
         showTideAssistUI(d.tideState, d.tideStrength, d.tideBasis);
 
@@ -1103,7 +1094,6 @@
       function copyApiSummaryOnly() {
         const d = assist.dataset;
 
-        // NEW: show tide assist even if you only copy notes (nice UX)
         showTideAssistUI(d.tideState, d.tideStrength, d.tideBasis);
 
         const notesEl = document.getElementById("notes");
@@ -1124,6 +1114,9 @@
       (function initTideAssistFromDataset(){
         const d = assist.dataset;
         showTideAssistUI(d.tideState, d.tideStrength, d.tideBasis);
+
+        // ✅ NEW: also keep hidden tide_strength in sync (even before you click buttons)
+        if (d.tideStrength) setValueById("tide_strength", d.tideStrength);
       })();
 
       if (btnUseApi) btnUseApi.addEventListener("click", useSuggestedValues);
@@ -1133,4 +1126,5 @@
 
 </body>
 </html>
+
 
