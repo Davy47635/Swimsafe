@@ -137,6 +137,37 @@ class FavoriteBeach(db.Model):
     )
 
 
+# ================================
+# --- SwimSafe: SWIM SESSION PLANNER (NEW) ---
+# ================================
+class SwimSessionPlan(db.Model):
+    __tablename__ = "swim_session_plans"
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    beach_id = db.Column(db.Integer, db.ForeignKey("beaches.id"), nullable=False)
+
+    # When the swimmer plans to swim (stored as UTC or naive datetime like your reports)
+    planned_for = db.Column(db.DateTime, nullable=False)
+
+    # Training details
+    goal = db.Column(db.String(80), nullable=False, default="Endurance")  # Endurance/Speed/Technique/Acclimation/Race-pace
+    duration_min = db.Column(db.Integer)  # optional
+    distance_m = db.Column(db.Integer)    # optional
+    intensity = db.Column(db.String(30), default="Easy")  # Easy/Moderate/Hard
+    skill_level = db.Column(db.String(30), default="Intermediate")  # Beginner/Intermediate/Advanced
+
+    notes = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    user = db.relationship("User")
+    beach = db.relationship("Beach")
+
+    __table_args__ = (
+        db.Index("ix_swim_session_user_time", "user_id", "planned_for"),
+    )
+
+
 # ---- Beach Photos ----
 class BeachPhoto(db.Model):
     __tablename__ = "beach_photos"
@@ -853,6 +884,137 @@ def remove_favourite(beach_id):
     return redirect(url_for("swimmer"))
 
 
+# ================================
+# --- SwimSafe: SESSION PLANNER ROUTES (NEW) ---
+# ================================
+@app.route("/swimmer/sessions", methods=["GET"])
+def swimmer_sessions():
+    if not login_required(role="swimmer"):
+        return redirect(url_for("login"))
+
+    uid = session.get("user_id")
+    if not uid:
+        flash("Please log in again.", "error")
+        return redirect(url_for("login"))
+
+    beaches_list = Beach.query.order_by(Beach.name.asc()).all()
+
+    now = datetime.utcnow()
+    upcoming = (
+        SwimSessionPlan.query
+        .filter(SwimSessionPlan.user_id == uid, SwimSessionPlan.planned_for >= now)
+        .order_by(SwimSessionPlan.planned_for.asc())
+        .limit(20)
+        .all()
+    )
+    recent = (
+        SwimSessionPlan.query
+        .filter(SwimSessionPlan.user_id == uid, SwimSessionPlan.planned_for < now)
+        .order_by(SwimSessionPlan.planned_for.desc())
+        .limit(10)
+        .all()
+    )
+
+    return render_template(
+        "swimmer_sessions.html",
+        beaches=beaches_list,
+        upcoming_sessions=upcoming,
+        recent_sessions=recent,
+        role=current_user_role(),
+        username=session.get("username"),
+    )
+
+
+@app.post("/swimmer/sessions/create")
+def create_swimmer_session():
+    if not login_required(role="swimmer"):
+        return redirect(url_for("login"))
+
+    uid = session.get("user_id")
+    if not uid:
+        flash("Please log in again.", "error")
+        return redirect(url_for("login"))
+
+    try:
+        beach_id = int(request.form.get("beach_id", "0"))
+        planned_for_str = (request.form.get("planned_for") or "").strip()
+
+        if not beach_id or not planned_for_str:
+            flash("Please select a beach and date/time.", "error")
+            return redirect(url_for("swimmer_sessions"))
+
+        # Expect HTML datetime-local: "YYYY-MM-DDTHH:MM"
+        planned_for = datetime.strptime(planned_for_str, "%Y-%m-%dT%H:%M")
+
+        goal = (request.form.get("goal") or "Endurance").strip()
+        intensity = (request.form.get("intensity") or "Easy").strip()
+        skill_level = (request.form.get("skill_level") or "Intermediate").strip()
+
+        duration_min_raw = (request.form.get("duration_min") or "").strip()
+        distance_m_raw = (request.form.get("distance_m") or "").strip()
+        notes = (request.form.get("notes") or "").strip()
+
+        duration_min = int(duration_min_raw) if duration_min_raw.isdigit() else None
+        distance_m = int(distance_m_raw) if distance_m_raw.isdigit() else None
+
+        # Basic sanity: must set at least duration or distance (optional but recommended)
+        if duration_min is None and distance_m is None:
+            flash("Add at least a duration (min) or distance (m) for the session.", "error")
+            return redirect(url_for("swimmer_sessions"))
+
+        # Validate beach exists
+        b = Beach.query.get(beach_id)
+        if not b:
+            flash("Selected beach not found.", "error")
+            return redirect(url_for("swimmer_sessions"))
+
+        s = SwimSessionPlan(
+            user_id=uid,
+            beach_id=beach_id,
+            planned_for=planned_for,
+            goal=goal,
+            duration_min=duration_min,
+            distance_m=distance_m,
+            intensity=intensity,
+            skill_level=skill_level,
+            notes=notes if notes else None,
+        )
+        db.session.add(s)
+        db.session.commit()
+        flash("Session planned successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error creating session: {e}", "error")
+
+    return redirect(url_for("swimmer_sessions"))
+
+
+@app.post("/swimmer/sessions/<int:session_id>/delete")
+def delete_swimmer_session(session_id):
+    if not login_required(role="swimmer"):
+        return redirect(url_for("login"))
+
+    uid = session.get("user_id")
+    if not uid:
+        flash("Please log in again.", "error")
+        return redirect(url_for("login"))
+
+    try:
+        s = SwimSessionPlan.query.get(session_id)
+        if not s or s.user_id != uid:
+            flash("Session not found.", "error")
+            return redirect(url_for("swimmer_sessions"))
+
+        db.session.delete(s)
+        db.session.commit()
+        flash("Session deleted.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error deleting session: {e}", "error")
+
+    return redirect(url_for("swimmer_sessions"))
+
+
 # ---- Swimmer page (view/filter reports + submit issues) ----
 @app.route("/swimmer", methods=["GET"])
 def swimmer():
@@ -1153,3 +1315,5 @@ with app.app_context():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+

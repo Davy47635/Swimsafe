@@ -101,6 +101,16 @@
       box-shadow:0 0 0 4px rgba(34,197,94,0.10);
     }
 
+    /* ✅ new: inline pill that behaves like a link */
+    .pill.link{
+      color: rgba(248,250,252,0.92);
+      text-decoration:none;
+    }
+    .pill.link:hover{
+      background: rgba(255,255,255,0.09);
+      text-decoration:none;
+    }
+
     /* Header */
     .pagehead{
       display:flex;
@@ -413,12 +423,18 @@
           <a href="{{ url_for('home') }}">Home</a>
           <a href="{{ url_for('beaches') }}">Beaches</a>
           <a href="{{ url_for('lifeguard') }}">Lifeguard</a>
+          <!-- ✅ NEW: training-focused page -->
+          <a href="{{ url_for('swimmer_sessions') }}">Session Planner</a>
         </div>
       </div>
 
       <div class="actions">
         <div class="pill" title="Role"><span class="statusdot"></span><strong>Swimmer</strong> access</div>
-        <a class="pill" href="{{ url_for('logout') }}" style="color:rgba(248,250,252,0.92)">Logout</a>
+        <!-- ✅ NEW: quick CTA to planner -->
+        <a class="pill link" href="{{ url_for('swimmer_sessions') }}" title="Plan an open-water session">
+          🧭 <strong>Plan a session</strong>
+        </a>
+        <a class="pill link" href="{{ url_for('logout') }}">Logout</a>
       </div>
     </nav>
 
@@ -447,6 +463,11 @@
         <div class="pill" title="Data source">
           Source: <strong>Official reports</strong>
         </div>
+
+        <!-- ✅ NEW: training tool badge -->
+        <a class="pill link" href="{{ url_for('swimmer_sessions') }}" title="Open training planner">
+          Training tools: <strong>Session Planner</strong>
+        </a>
 
         {% if username %}
           <div class="pill" title="Logged in user">
