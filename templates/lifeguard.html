@@ -474,6 +474,24 @@
       line-height: 1.45;
     }
 
+    /* NEW: badge style for tide strength in reports table */
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .badge strong{ color: var(--text); font-weight: 1000; }
+    .badge.ok{ border-color: rgba(45,212,191,.35); background: rgba(45,212,191,.12); }
+    .badge.warn{ border-color: rgba(255,209,102,.35); background: rgba(255,209,102,.12); }
+    .badge.bad{ border-color: rgba(255,93,108,.35); background: rgba(255,93,108,.12); }
+
     /* Tables */
     .section{
       margin-top: 16px;
@@ -921,10 +939,36 @@
           </thead>
           <tbody>
             {% for r in reports %}
+              {# Extract tide strength from notes (Option A stores: [TIDE STRENGTH: Weak]) #}
+              {% set tide_strength_val = "" %}
+              {% if r.notes and "[TIDE STRENGTH:" in r.notes %}
+                {% set _after = r.notes.split("[TIDE STRENGTH:", 1)[1] %}
+                {% set tide_strength_val = _after.split("]", 1)[0].replace(":", "").strip() %}
+              {% endif %}
+
+              {% set tide_strength_lower = (tide_strength_val|lower) %}
+              {% set tide_strength_class = "" %}
+              {% if "strong" in tide_strength_lower %}
+                {% set tide_strength_class = "bad" %}
+              {% elif "moderate" in tide_strength_lower %}
+                {% set tide_strength_class = "warn" %}
+              {% elif "weak" in tide_strength_lower or "slack" in tide_strength_lower %}
+                {% set tide_strength_class = "ok" %}
+              {% endif %}
+
               <tr>
                 <td class="nowrap">{{ r.reported_at.strftime("%Y-%m-%d %H:%M") }}</td>
                 <td>{{ r.beach.name }}</td>
-                <td class="nowrap">{{ r.tide or "—" }}</td>
+                <td class="nowrap">
+                  <div style="display:grid; gap:6px;">
+                    <div>{{ r.tide or "—" }}</div>
+                    {% if tide_strength_val %}
+                      <span class="badge {{ tide_strength_class }}">
+                        <strong>Strength</strong> {{ tide_strength_val }}
+                      </span>
+                    {% endif %}
+                  </div>
+                </td>
                 <td class="nowrap">{{ r.temp_c or "—" }}</td>
                 <td class="nowrap">{{ r.flag_status or "—" }}</td>
                 <td>{{ r.notes or "" }}</td>
@@ -1033,30 +1077,27 @@
         tideAssistBox.style.display = "block";
       }
 
+      /* NEW: shorter API summary to avoid notes hitting 255 chars
+         (still informative, but not massive) */
       function buildApiSummary() {
         const d = assist.dataset;
         const parts = [];
 
+        // Tide (short)
         if (d.tideState || d.tideStrength) {
           const t = [];
           if (d.tideState) t.push(d.tideState);
           if (d.tideStrength) t.push(d.tideStrength);
-          const extra = d.tideBasis ? ` [${d.tideBasis}]` : "";
-          parts.push(`Tide: ${t.join(" / ")}${extra}`);
+          parts.push(`Tide: ${t.join(" / ")}`);
         }
 
-        if (d.waveHeight) parts.push(`Wave: ${Number(d.waveHeight).toFixed(2)}m`);
-        if (d.waveDirection) parts.push(`Wave dir: ${Number(d.waveDirection).toFixed(0)}°`);
-        if (d.wavePeriod) parts.push(`Wave period: ${Number(d.wavePeriod).toFixed(1)}s`);
-        if (d.swellHeight) parts.push(`Swell: ${Number(d.swellHeight).toFixed(2)}m`);
-        if (d.swellDirection) parts.push(`Swell dir: ${Number(d.swellDirection).toFixed(0)}°`);
-        if (d.windSpeed) parts.push(`Wind: ${Number(d.windSpeed).toFixed(2)}m/s`);
-        if (d.windDirection) parts.push(`Wind dir: ${Number(d.windDirection).toFixed(0)}°`);
-        if (d.waterTemp) parts.push(`Water temp: ${Number(d.waterTemp).toFixed(1)}°C`);
-        if (d.apiTime) parts.push(`API time: ${d.apiTime}`);
+        // Wave + wind essentials only
+        if (d.waveHeight) parts.push(`Wave: ${Number(d.waveHeight).toFixed(1)}m`);
+        if (d.windSpeed) parts.push(`Wind: ${Number(d.windSpeed).toFixed(1)}m/s`);
+        if (d.waterTemp) parts.push(`Temp: ${Number(d.waterTemp).toFixed(1)}°C`);
 
         if (parts.length === 0) return "";
-        return `API summary — ${parts.join(" | ")}`;
+        return `API — ${parts.join(" | ")}`;
       }
 
       function setValueById(id, value) {
@@ -1075,7 +1116,7 @@
         if (d.waterTemp) setValueById("temp_c", Number(d.waterTemp).toFixed(1));
         if (d.advisoryLevel) setValueById("advisory_level", d.advisoryLevel);
 
-        // ✅ NEW: push tide strength into hidden field so it saves in report
+        // push tide strength into hidden field so it saves in report
         if (d.tideStrength) setValueById("tide_strength", d.tideStrength);
 
         if (d.tideState) setTideDropdown(d.tideState);
@@ -1086,7 +1127,7 @@
         if (notesEl && summary) {
           const current = (notesEl.value || "").trim();
           if (!current) notesEl.value = summary;
-          else if (!current.includes("API summary —")) notesEl.value = current + "\n" + summary;
+          else if (!current.includes("API —")) notesEl.value = current + "\n" + summary;
           notesEl.dispatchEvent(new Event("input", { bubbles: true }));
         }
       }
@@ -1102,7 +1143,7 @@
 
         const current = (notesEl.value || "").trim();
         if (!current) notesEl.value = summary;
-        else if (!current.includes("API summary —")) notesEl.value = current + "\n" + summary;
+        else if (!current.includes("API —")) notesEl.value = current + "\n" + summary;
 
         notesEl.dispatchEvent(new Event("input", { bubbles: true }));
         notesEl.dispatchEvent(new Event("change", { bubbles: true }));
@@ -1115,7 +1156,7 @@
         const d = assist.dataset;
         showTideAssistUI(d.tideState, d.tideStrength, d.tideBasis);
 
-        // ✅ NEW: also keep hidden tide_strength in sync (even before you click buttons)
+        // keep hidden tide_strength in sync (even before you click buttons)
         if (d.tideStrength) setValueById("tide_strength", d.tideStrength);
       })();
 
@@ -1126,5 +1167,6 @@
 
 </body>
 </html>
+
 
 
