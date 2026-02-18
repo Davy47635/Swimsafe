@@ -496,6 +496,95 @@ def build_safety_advisory(api_data: dict):
     }
 
 
+# ================================
+# --- SwimSafe: ADDED for Swimmer Dashboard (safe additions) ---
+# ================================
+def _pick_primary_beach_for_swimmer(beach_id_str: str, reports: list, beaches_list: list):
+    """
+    Choose a beach to use for API/risk/tips:
+    - If filter is set and valid -> that beach
+    - Else try the beach of the latest report in the table
+    - Else fallback to first beach in directory
+    """
+    try:
+        if beach_id_str and beach_id_str.isdigit():
+            return Beach.query.get(int(beach_id_str))
+    except Exception:
+        pass
+
+    try:
+        if reports and len(reports) > 0 and getattr(reports[0], "beach", None):
+            return reports[0].beach
+    except Exception:
+        pass
+
+    try:
+        if beaches_list and len(beaches_list) > 0:
+            return beaches_list[0]
+    except Exception:
+        pass
+
+    return None
+
+
+def _swimmer_context_tips(latest_report: Optional["SeaReport"], advisory: Optional[dict], tide: Optional[dict]):
+    """
+    Returns a small list of short, high-value tips.
+    Purely rule-based, safe even when some data is missing.
+    """
+    tips = []
+
+    # Flag-driven
+    flag = None
+    if latest_report:
+        flag = (latest_report.flag_status or "").strip().lower()
+
+    if flag == "red":
+        tips.append("Red flag: conditions may be unsafe. Consider postponing or choosing a sheltered location.")
+    elif flag == "yellow":
+        tips.append("Yellow flag: use caution. Stay close to shore and swim within your limits.")
+    elif flag == "green":
+        tips.append("Green flag: conditions are generally safer, but always remain vigilant and assess entry/exit points.")
+
+    # Tide-driven
+    if tide:
+        state = (tide.get("tide_state") or "").strip().lower()
+        strength = (tide.get("tide_strength") or "").strip().lower()
+
+        if state in {"falling", "low"}:
+            tips.append("Falling/low tide can increase outgoing flow around rocks and channels — watch for rips.")
+        elif state in {"rising", "high"}:
+            tips.append("Rising/high tide can cover hazards on entry/exit — check footing and shore break.")
+
+        if strength == "strong":
+            tips.append("Strong tidal flow detected — avoid swimming near piers, headlands, or narrow channels.")
+        elif strength == "moderate":
+            tips.append("Moderate tidal flow — stay aware of drift and choose a clear landmark for navigation.")
+
+    # Advisory-driven (API)
+    if advisory:
+        level = (advisory.get("level") or "").strip().upper()
+        if level == "UNSAFE":
+            tips.append("API advisory indicates UNSAFE conditions — only proceed with lifeguard guidance or do not enter.")
+        elif level == "CAUTION":
+            tips.append("API advisory indicates CAUTION — consider a shorter swim and avoid exposed sections.")
+        elif level == "LOW RISK":
+            tips.append("API advisory indicates lower risk — still check wind, swell sets, and visibility before entering.")
+        elif level == "NO DATA":
+            tips.append("Limited API data available — rely more heavily on flags, local knowledge, and conditions on arrival.")
+
+    # Remove duplicates while preserving order
+    deduped = []
+    seen = set()
+    for t in tips:
+        if t not in seen:
+            deduped.append(t)
+            seen.add(t)
+
+    # Keep it short for the UI (can expand later)
+    return deduped[:4]
+
+
 # ---- Register ----
 ALLOWED_ROLES = {"swimmer", "lifeguard"}
 
@@ -706,12 +795,64 @@ def swimmer():
 
     reports = report_query.limit(20).all()
 
+    # --- SwimSafe: ADDED for Swimmer Dashboard (safe additions) ---
+    latest_report = reports[0] if reports else None
+
+    api_data = None
+    tide = None
+    advisory = None
+    swimmer_tips = []
+
+    # Pick a sensible beach for API/tips (filtered beach if selected, else most recent report beach)
+    primary_beach = _pick_primary_beach_for_swimmer(beach_id, reports, beaches_list)
+
+    if primary_beach and primary_beach.latitude is not None and primary_beach.longitude is not None:
+        try:
+            lat = float(primary_beach.latitude)
+            lng = float(primary_beach.longitude)
+
+            api_data = get_marine_conditions(lat, lng)
+            tide = compute_tide_assist(lat, lng, marine_data=api_data)
+
+            if api_data is None:
+                api_data = {}
+
+            if tide:
+                api_data["tide_state"] = tide.get("tide_state", "")
+                api_data["tide_strength"] = tide.get("tide_strength", "")
+                api_data["tide_basis"] = tide.get("tide_basis", "")
+
+            advisory = build_safety_advisory(api_data if api_data else None)
+            swimmer_tips = _swimmer_context_tips(latest_report, advisory, tide)
+        except Exception:
+            # Fail silently (dashboard still renders with DB data)
+            api_data = None
+            tide = None
+            advisory = None
+            swimmer_tips = []
+
+    # KPI bundle (safe to use in template)
+    kpis = {
+        "report_count": len(reports),
+        "beach_count": len(beaches_list),
+        "latest_report_time": latest_report.reported_at.strftime("%Y-%m-%d %H:%M") if latest_report else "—",
+    }
+
     return render_template(
         "swimmer.html",
         beaches=beaches_list,
         reports=reports,
         role=current_user_role(),
-        selected_beach_id=beach_id
+        selected_beach_id=beach_id,
+        # --- SwimSafe: ADDED for Swimmer Dashboard (safe additions) ---
+        latest_report=latest_report,
+        api_data=api_data,
+        tide=tide,
+        advisory=advisory,
+        swimmer_tips=swimmer_tips,
+        kpis=kpis,
+        username=session.get("username"),
+        primary_beach=primary_beach,
     )
 
 
@@ -921,4 +1062,3 @@ with app.app_context():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
