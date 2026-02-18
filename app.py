@@ -119,6 +119,24 @@ class User(db.Model):
     role = db.Column(db.String(20), nullable=False)       # swimmer or lifeguard
 
 
+# ================================
+# --- SwimSafe: FAVOURITE BEACHES (NEW) ---
+# ================================
+class FavoriteBeach(db.Model):
+    __tablename__ = "favorite_beaches"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    beach_id = db.Column(db.Integer, db.ForeignKey("beaches.id"), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    user = db.relationship("User")
+    beach = db.relationship("Beach")
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "beach_id", name="uq_favorite_user_beach"),
+    )
+
+
 # ---- Beach Photos ----
 class BeachPhoto(db.Model):
     __tablename__ = "beach_photos"
@@ -780,6 +798,61 @@ def upload_beach_photo(beach_id):
     return redirect(url_for("beach_detail", beach_id=beach.id))
 
 
+# ================================
+# --- SwimSafe: FAVOURITES ROUTES (NEW) ---
+# ================================
+@app.post("/favourite/<int:beach_id>/add")
+def add_favourite(beach_id):
+    if not login_required(role="swimmer"):
+        return redirect(url_for("login"))
+
+    try:
+        uid = session.get("user_id")
+        if not uid:
+            flash("Please log in again.", "error")
+            return redirect(url_for("login"))
+
+        existing = FavoriteBeach.query.filter_by(user_id=uid, beach_id=beach_id).first()
+        if existing:
+            flash("Beach already in favourites.", "success")
+            return redirect(url_for("swimmer"))
+
+        fav = FavoriteBeach(user_id=uid, beach_id=beach_id)
+        db.session.add(fav)
+        db.session.commit()
+        flash("Added to favourites.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error adding favourite: {e}", "error")
+
+    return redirect(url_for("swimmer"))
+
+
+@app.post("/favourite/<int:beach_id>/remove")
+def remove_favourite(beach_id):
+    if not login_required(role="swimmer"):
+        return redirect(url_for("login"))
+
+    try:
+        uid = session.get("user_id")
+        if not uid:
+            flash("Please log in again.", "error")
+            return redirect(url_for("login"))
+
+        fav = FavoriteBeach.query.filter_by(user_id=uid, beach_id=beach_id).first()
+        if fav:
+            db.session.delete(fav)
+            db.session.commit()
+            flash("Removed from favourites.", "success")
+        else:
+            flash("Favourite not found.", "error")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error removing favourite: {e}", "error")
+
+    return redirect(url_for("swimmer"))
+
+
 # ---- Swimmer page (view/filter reports + submit issues) ----
 @app.route("/swimmer", methods=["GET"])
 def swimmer():
@@ -838,6 +911,21 @@ def swimmer():
         "latest_report_time": latest_report.reported_at.strftime("%Y-%m-%d %H:%M") if latest_report else "—",
     }
 
+    # --- SwimSafe: FAVOURITES (NEW, safe additions) ---
+    uid = session.get("user_id")
+    favourites = []
+    favourite_beach_ids = set()
+
+    if uid:
+        favourites = (
+            FavoriteBeach.query
+            .filter_by(user_id=uid)
+            .join(Beach, FavoriteBeach.beach_id == Beach.id)
+            .order_by(Beach.name.asc())
+            .all()
+        )
+        favourite_beach_ids = {f.beach_id for f in favourites}
+
     return render_template(
         "swimmer.html",
         beaches=beaches_list,
@@ -853,6 +941,9 @@ def swimmer():
         kpis=kpis,
         username=session.get("username"),
         primary_beach=primary_beach,
+        # --- SwimSafe: FAVOURITES (NEW) ---
+        favourites=favourites,
+        favourite_beach_ids=favourite_beach_ids,
     )
 
 
