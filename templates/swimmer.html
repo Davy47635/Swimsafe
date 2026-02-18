@@ -7,17 +7,15 @@
 
   <style>
     :root{
-      /* Match Home page / Lifeguard vibe (clean blue glass) */
+      /* Brighter "Home page" style ocean blue (less dark, less grey) */
       --bg:
-        radial-gradient(1200px 700px at 12% -12%, rgba(59,130,246,0.55) 0%, rgba(2,6,23,0.0) 55%),
-        radial-gradient(900px 520px at 85% 10%, rgba(34,211,238,0.20) 0%, rgba(2,6,23,0.0) 60%),
-        linear-gradient(180deg, #0b3b73 0%, #062a52 42%, #051a33 100%);
+        radial-gradient(900px 520px at 12% 8%, rgba(59,130,246,0.55) 0%, rgba(14,165,233,0.22) 45%, rgba(2,6,23,0.0) 70%),
+        radial-gradient(1100px 700px at 90% -10%, rgba(34,211,238,0.25) 0%, rgba(2,6,23,0.0) 70%),
+        linear-gradient(180deg, #0b5bd3 0%, #0a3f99 42%, #082a66 72%, #071f4b 100%);
 
-      --card: rgba(255,255,255,0.08);
-      --card-strong: rgba(255,255,255,0.11);
+      --card: rgba(255,255,255,0.10);
+      --card-strong: rgba(255,255,255,0.14);
       --line: rgba(255,255,255,0.18);
-      --line-soft: rgba(255,255,255,0.12);
-
       --text: #f8fafc;
       --muted: rgba(248,250,252,0.78);
 
@@ -30,9 +28,7 @@
 
       --shadow:
         0 0 0 1px rgba(255,255,255,0.06),
-        0 18px 50px rgba(2,6,23,.45);
-
-      --radius: 16px;
+        0 18px 42px rgba(2,6,23,.35);
     }
 
     *{box-sizing:border-box}
@@ -45,7 +41,7 @@
       min-height:100vh;
     }
 
-    a{color:#93c5fd;text-decoration:none}
+    a{color:#dbeafe;text-decoration:none}
     a:hover{text-decoration:underline}
 
     .container{max-width:1150px;margin:26px auto;padding:0 16px}
@@ -59,52 +55,36 @@
       margin-bottom:18px;
       font-size:14px;
     }
-    .nav-left{display:flex;gap:16px;align-items:center;min-width:0}
+    .nav-left{display:flex;gap:16px;align-items:center}
     .brand{
       display:flex;align-items:center;gap:10px;
-      font-weight:950;
+      font-weight:900;
       letter-spacing:.2px;
       color:var(--text);
-      white-space:nowrap;
     }
-    .mark{
-      width:38px;height:38px;border-radius:14px;
-      background: rgba(34,211,238,0.16);
-      border:1px solid rgba(34,211,238,0.26);
+    .dot{
+      width:38px;height:38px;border-radius:12px;
+      background: rgba(255,255,255,0.14);
+      border:1px solid rgba(255,255,255,0.22);
       display:grid;place-items:center;
-      box-shadow: 0 0 0 8px rgba(34,211,238,0.06);
-      flex:0 0 auto;
+      box-shadow: 0 0 0 6px rgba(255,255,255,0.06);
     }
-    .mark::after{
+    .dot::after{
       content:"≈";
-      font-weight:950;
-      color:#a5f3fc;
+      font-weight:900;
+      color:#e0f2fe;
       transform: translateY(-1px);
     }
 
-    .nav-links{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .nav-links{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
     .nav-links a{
       padding:8px 10px;border-radius:12px;
-      color: rgba(248,250,252,0.92);
+      color: rgba(248,250,252,0.95);
     }
     .nav-links a:hover{
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.10);
       text-decoration:none;
     }
-
-    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:8px 12px;
-      border:1px solid var(--line);
-      border-radius:999px;
-      background: rgba(255,255,255,0.08);
-      font-size:13px;
-      color:var(--muted);
-      box-shadow:0 1px 0 rgba(255,255,255,0.05);
-      backdrop-filter: blur(10px);
-    }
-    .pill strong{color:var(--text);font-weight:950}
 
     /* Header */
     .pagehead{
@@ -113,26 +93,34 @@
       align-items:flex-start;
       justify-content:space-between;
       flex-wrap:wrap;
-      margin-bottom:14px;
+      margin-bottom:12px;
     }
     h1{margin:0;font-size:26px}
-    .subtitle{margin:6px 0 0 0;color:var(--muted);max-width:80ch}
+    .subtitle{margin:6px 0 0 0;color:var(--muted);max-width:75ch}
+
+    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 12px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(255,255,255,0.12);
+      font-size:13px;
+      color: rgba(248,250,252,0.86);
+      box-shadow:0 1px 0 rgba(255,255,255,0.06);
+      backdrop-filter: blur(10px);
+    }
+    .pill strong{color:var(--text);font-weight:900}
 
     /* Cards / grid */
     .card{
       background:var(--card);
       border:1px solid var(--line);
-      border-radius: var(--radius);
+      border-radius:18px;
       padding:16px;
       box-shadow: var(--shadow);
       backdrop-filter: blur(12px);
     }
-    .card.soft{
-      background: rgba(255,255,255,0.06);
-      border-color: var(--line-soft);
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
-    }
-
     .grid{
       display:grid;
       grid-template-columns: repeat(12, 1fr);
@@ -151,25 +139,25 @@
       display:flex;gap:12px;align-items:flex-start;
     }
     .kpi .icon{
-      width:40px;height:40px;border-radius:14px;
-      border:1px solid rgba(255,255,255,0.14);
+      width:42px;height:42px;border-radius:14px;
+      border:1px solid rgba(255,255,255,0.20);
       display:grid;place-items:center;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.14);
       color: var(--text);
       flex:0 0 auto;
     }
-    .kpi .label{font-size:13px;color:var(--muted);margin:0}
-    .kpi .value{font-size:18px;font-weight:950;margin:2px 0 0 0}
+    .kpi .label{font-size:13px;color:rgba(248,250,252,0.78);margin:0}
+    .kpi .value{font-size:18px;font-weight:900;margin:2px 0 0 0}
 
     /* Flash */
     .flash{
       margin:14px 0;
       padding:12px 14px;
-      border-radius: 14px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,0.08);
-      box-shadow:0 1px 0 rgba(255,255,255,0.05);
-      backdrop-filter: blur(10px);
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.14);
+      box-shadow:0 1px 0 rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
     }
 
     /* Tabs */
@@ -178,76 +166,74 @@
       margin-top:14px;
     }
     .tabbtn{
-      border:1px solid rgba(255,255,255,0.16);
-      background: rgba(255,255,255,0.08);
-      color: var(--muted);
+      border:1px solid rgba(255,255,255,0.20);
+      background: rgba(255,255,255,0.12);
+      color: rgba(248,250,252,0.90);
       padding:10px 12px;
       border-radius:999px;
-      font-weight:950;
+      font-weight:900;
       cursor:pointer;
       font-size:14px;
-      backdrop-filter: blur(10px);
-      transition: background .15s ease, border-color .15s ease, transform .05s ease;
+      backdrop-filter: blur(12px);
     }
-    .tabbtn:hover{background: rgba(255,255,255,0.10)}
-    .tabbtn:active{transform: translateY(1px)}
+    .tabbtn:hover{background: rgba(255,255,255,0.16)}
     .tabbtn.active{
       color: var(--text);
-      border-color: rgba(59,130,246,0.55);
-      background: rgba(59,130,246,0.20);
+      border-color: rgba(255,255,255,0.28);
+      background: rgba(59,130,246,0.30);
     }
     .tabpane{display:none;margin-top:14px}
     .tabpane.active{display:block}
 
-    /* Forms */
-    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    /* Forms - remove grey look */
+    label{display:block;font-size:13px;color:rgba(248,250,252,0.82);margin-bottom:6px}
     select, textarea, input[type="text"]{
       width:100%;
       padding:10px 12px;
-      border:1px solid rgba(255,255,255,0.16);
-      border-radius:14px;
-      background: rgba(255,255,255,0.07);
+      border:1px solid rgba(255,255,255,0.22);
+      border-radius:16px;
+      background: rgba(255,255,255,0.12);
       color: var(--text);
       font: inherit;
       outline:none;
       backdrop-filter: blur(10px);
     }
     select:focus, textarea:focus, input[type="text"]:focus{
-      border-color: rgba(59,130,246,0.75);
-      box-shadow:0 0 0 3px rgba(59,130,246,.20);
+      border-color: rgba(255,255,255,0.35);
+      box-shadow:0 0 0 3px rgba(59,130,246,.28);
     }
-    textarea{min-height:90px;resize:vertical}
+    textarea{min-height:70px;resize:vertical}
 
+    /* Buttons - more like lifeguard */
     .btn{
-      background: var(--btn);
-      border:1px solid rgba(59,130,246,0.75);
+      background: rgba(59,130,246,0.92);
+      border:1px solid rgba(255,255,255,0.22);
       color:#fff;
-      font-weight:950;
-      padding:10px 12px;
+      font-weight:900;
+      padding:11px 14px;
       border-radius:14px;
       cursor:pointer;
       width:100%;
-      transition: background .15s ease, transform .05s ease;
+      box-shadow: 0 10px 22px rgba(2,6,23,.25);
     }
-    .btn:hover{background: var(--btn-hover)}
-    .btn:active{transform: translateY(1px)}
+    .btn:hover{background: rgba(37,99,235,0.95)}
     .btn.secondary{
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.12);
       color: var(--text);
-      border-color: rgba(255,255,255,0.18);
-      font-weight:950;
+      border-color: rgba(255,255,255,0.22);
+      box-shadow:none;
     }
-    .btn.secondary:hover{background: rgba(255,255,255,0.10)}
+    .btn.secondary:hover{background: rgba(255,255,255,0.16)}
 
     .btn.small{
-      padding:8px 10px;
-      border-radius:12px;
+      padding:8px 12px;
+      border-radius:999px;
       font-size:13px;
       width:auto;
       display:inline-flex;
       align-items:center;
       gap:8px;
-      white-space:nowrap;
+      box-shadow:none;
     }
 
     .row{
@@ -257,33 +243,34 @@
       align-items:end;
     }
     .row .span-6{grid-column: span 6;}
+    .row .span-5{grid-column: span 5;}
     .row .span-4{grid-column: span 4;}
     .row .span-3{grid-column: span 3;}
     .row .span-12{grid-column: span 12;}
     @media (max-width: 980px){
-      .row .span-6,.row .span-4,.row .span-3{grid-column: span 12;}
+      .row .span-6,.row .span-5,.row .span-4,.row .span-3{grid-column: span 12;}
     }
 
     /* Table */
     .tablewrap{
-      border:1px solid rgba(255,255,255,0.16);
-      border-radius: var(--radius);
+      border:1px solid rgba(255,255,255,0.22);
+      border-radius:18px;
       overflow:hidden;
-      background: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.10);
       backdrop-filter: blur(12px);
     }
     table{width:100%;border-collapse:collapse}
     th,td{padding:12px 12px;text-align:left;vertical-align:top}
     thead th{
-      background: rgba(255,255,255,0.08);
-      color: rgba(248,250,252,0.84);
+      background: rgba(255,255,255,0.12);
+      color: rgba(248,250,252,0.85);
       font-size:13px;
-      font-weight:950;
-      border-bottom:1px solid rgba(255,255,255,0.12);
+      font-weight:900;
+      border-bottom:1px solid rgba(255,255,255,0.18);
     }
-    tbody tr{border-top:1px solid rgba(255,255,255,0.10)}
-    tbody tr:hover{background: rgba(255,255,255,0.06)}
-    .small{font-size:13px;color:var(--muted)}
+    tbody tr{border-top:1px solid rgba(255,255,255,0.16)}
+    tbody tr:hover{background: rgba(255,255,255,0.10)}
+    .small{font-size:13px;color:rgba(248,250,252,0.75)}
     .nowrap{white-space:nowrap}
 
     /* Chips */
@@ -295,30 +282,33 @@
       border-radius:999px;
       font-size:12px;
       font-weight:950;
-      border:1px solid transparent;
+      border:1px solid rgba(255,255,255,0.18);
       white-space:nowrap;
+      background: rgba(255,255,255,0.10);
+      color: rgba(248,250,252,0.92);
+      backdrop-filter: blur(10px);
     }
-    .chip.ok{background: rgba(34,197,94,0.18); color:#bbf7d0; border-color: rgba(34,197,94,0.40)}
-    .chip.warn{background: rgba(251,191,36,0.18); color:#fde68a; border-color: rgba(251,191,36,0.40)}
-    .chip.bad{background: rgba(239,68,68,0.18); color:#fecaca; border-color: rgba(239,68,68,0.40)}
-    .chip.neutral{background: rgba(148,163,184,0.14); color:#e2e8f0; border-color: rgba(148,163,184,0.28)}
+    .chip.ok{background: rgba(34,197,94,0.18); border-color: rgba(34,197,94,0.35)}
+    .chip.warn{background: rgba(251,191,36,0.18); border-color: rgba(251,191,36,0.35)}
+    .chip.bad{background: rgba(239,68,68,0.18); border-color: rgba(239,68,68,0.35)}
+    .chip.neutral{background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.18)}
     .chip .dot2{
       width:8px;height:8px;border-radius:999px;background:currentColor;
-      opacity:.85;
+      opacity:.9;
     }
 
     /* Empty state */
     .empty{
-      padding:14px;
-      border:1px dashed rgba(255,255,255,0.18);
-      border-radius: var(--radius);
-      background: rgba(255,255,255,0.06);
-      color:var(--muted);
-      backdrop-filter: blur(10px);
+      padding:16px;
+      border:1px dashed rgba(255,255,255,0.26);
+      border-radius:18px;
+      background: rgba(255,255,255,0.10);
+      color: rgba(248,250,252,0.82);
+      backdrop-filter: blur(12px);
     }
     .empty strong{color:var(--text)}
 
-    /* Snapshot layout */
+    /* Snapshot */
     .snapshot{
       display:grid;
       grid-template-columns: repeat(12, 1fr);
@@ -339,22 +329,22 @@
     }
     .stat{
       grid-column: span 6;
-      border:1px solid rgba(255,255,255,0.16);
-      border-radius:14px;
-      padding:10px;
-      background: rgba(255,255,255,0.06);
-      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,0.20);
+      border-radius:16px;
+      padding:12px;
+      background: rgba(255,255,255,0.10);
+      backdrop-filter: blur(12px);
     }
-    .stat .k{font-size:12px;color:var(--muted);margin:0}
+    .stat .k{font-size:12px;color:rgba(248,250,252,0.78);margin:0}
     .stat .v{font-size:14px;font-weight:950;margin:6px 0 0 0}
 
     details{
       margin-top:10px;
-      border:1px solid rgba(255,255,255,0.16);
-      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.22);
+      border-radius:16px;
       padding:10px 12px;
-      background: rgba(255,255,255,0.06);
-      backdrop-filter: blur(10px);
+      background: rgba(255,255,255,0.10);
+      backdrop-filter: blur(12px);
     }
     details summary{
       cursor:pointer;
@@ -363,22 +353,22 @@
     }
     ul.clean{
       margin:10px 0 0 18px;
-      color:var(--muted);
+      color:rgba(248,250,252,0.82);
       font-size:13px;
     }
 
     .note{
       margin-top:10px;
       font-size:13px;
-      color:var(--muted);
+      color:rgba(248,250,252,0.80);
     }
 
-    /* Favourites list */
+    /* Favourites */
     .favlist{
       margin-top:10px;
-      border:1px solid rgba(255,255,255,0.16);
-      border-radius: var(--radius);
-      background: rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.22);
+      border-radius:18px;
+      background: rgba(255,255,255,0.10);
       overflow:hidden;
       backdrop-filter: blur(12px);
     }
@@ -388,7 +378,7 @@
       justify-content:space-between;
       gap:10px;
       padding:12px 12px;
-      border-top:1px solid rgba(255,255,255,0.10);
+      border-top:1px solid rgba(255,255,255,0.16);
     }
     .favitem:first-child{border-top:none}
     .favname{
@@ -406,19 +396,9 @@
       text-overflow:ellipsis;
     }
     .favname a:hover{text-decoration:underline}
-    .favmeta{font-size:12px;color:var(--muted)}
+    .favmeta{font-size:12px;color:rgba(248,250,252,0.78)}
     .favactions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
     form.inline{display:inline}
-
-    /* Small helper row inside Issue tab */
-    .helper{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-      justify-content:space-between;
-    }
-    .helper .muted{color:var(--muted);font-size:13px}
   </style>
 </head>
 
@@ -427,7 +407,7 @@
 
     <nav>
       <div class="nav-left">
-        <div class="brand"><span class="mark"></span>SwimSafe</div>
+        <div class="brand"><span class="dot"></span>SwimSafe</div>
         <div class="nav-links">
           <a href="{{ url_for('home') }}">Home</a>
           <a href="{{ url_for('beaches') }}">Beaches</a>
@@ -543,7 +523,6 @@
 
       <div class="card col-12">
 
-        <!-- Safety Snapshot -->
         <div class="snapshot">
           <div class="snap-left">
             <h3 style="margin:0 0 6px 0">Safety Snapshot</h3>
@@ -657,7 +636,7 @@
             <h3 style="margin:0 0 6px 0">Recommended actions</h3>
 
             {% if swimmer_tips is defined and swimmer_tips|length > 0 %}
-              <div class="card soft">
+              <div class="empty" style="border-style:solid">
                 <strong>Context-aware tips</strong>
                 <ul class="clean" style="margin-top:10px">
                   {% for t in swimmer_tips %}
@@ -666,7 +645,7 @@
                 </ul>
               </div>
             {% else %}
-              <div class="empty">
+              <div class="empty" style="border-style:solid">
                 <strong>No live tips available</strong><br/>
                 Add beach latitude/longitude + Stormglass key to enable live safety tips.
               </div>
@@ -674,7 +653,6 @@
 
             <div style="height:12px"></div>
 
-            <!-- FAVOURITES -->
             <h3 style="margin:0 0 6px 0">Favourite beaches</h3>
 
             {% if favourites is defined and favourites|length > 0 %}
@@ -697,7 +675,7 @@
               </div>
               <div class="note">Tip: favourites make it faster to check your regular swim spots.</div>
             {% else %}
-              <div class="empty">
+              <div class="empty" style="border-style:solid">
                 <strong>No favourites yet.</strong><br/>
                 Add one from the report table below (or from the Beaches directory).
               </div>
@@ -838,7 +816,7 @@
         <div id="tabIssue" class="tabpane" role="tabpanel">
           <div class="grid">
             <div class="col-8">
-              <div class="card soft">
+              <div class="card">
                 <h2 style="margin:0 0 6px 0">Report an issue</h2>
                 <p class="subtitle" style="margin:0 0 14px 0">
                   Reports are shared with lifeguards to improve awareness and response.
@@ -872,14 +850,13 @@
                     <div class="span-12">
                       <label for="issue_desc">Description *</label>
                       <textarea id="issue_desc" name="issue_desc" maxlength="255" required
-                        placeholder="Briefly describe what you saw (e.g., rip current near the pier, debris near entry point)…"></textarea>
+                        placeholder="Briefly describe what you saw (e.g., rip current near the pier, lots of debris near entry point)…"></textarea>
                       <div class="note">Max 255 characters. Keep it factual and location-specific if possible.</div>
                     </div>
 
                     <div class="span-4">
                       <button class="btn" type="submit">Submit issue</button>
                     </div>
-
                     <div class="span-8" style="display:flex;align-items:center">
                       <div class="note">
                         After submitting, your report is stored and visible to lifeguards on their dashboard.
@@ -891,21 +868,19 @@
             </div>
 
             <div class="col-4">
-              <div class="card soft">
-                <h3 style="margin:0 0 10px 0">What should I report?</h3>
-                <ul class="clean" style="margin-top:0">
+              <div class="card">
+                <h3 style="margin-top:0">What should I report?</h3>
+                <ul class="clean" style="margin:10px 0 0 18px">
                   <li>Rip currents / strong outgoing tides</li>
                   <li>Jellyfish blooms</li>
                   <li>Pollution, debris, or sharp objects</li>
                   <li>Missing flags / confusing signage</li>
                   <li>Any hazard affecting safe entry/exit</li>
                 </ul>
-
                 <div style="height:10px"></div>
-
                 <div class="empty">
-                  <strong>Optional upgrade:</strong><br/>
-                  Add photo upload + map pin for exact hazard location.
+                  <strong>Future improvement:</strong><br/>
+                  Photo upload + map pin for exact hazard location.
                 </div>
               </div>
             </div>
@@ -915,11 +890,10 @@
         <!-- TIPS TAB -->
         <div id="tabTips" class="tabpane" role="tabpanel">
           <div class="grid">
-
             <div class="col-12">
               {% if swimmer_tips is defined and swimmer_tips|length > 0 %}
-                <div class="card soft">
-                  <h3 style="margin:0 0 6px 0">Live safety tips</h3>
+                <div class="card">
+                  <h3 style="margin-top:0">Live safety tips</h3>
                   <p class="small">Generated from the current flag/tide/API advisory (rule-based).</p>
                   <ul class="clean">
                     {% for t in swimmer_tips %}
@@ -935,45 +909,25 @@
               {% endif %}
             </div>
 
-            <div class="col-6">
-              <div class="card soft">
-                <h3 style="margin:0 0 6px 0">Rip currents</h3>
-                <p class="small">
-                  If you feel yourself being pulled away from shore, stay calm and avoid fighting the current directly.
-                  Swim parallel to the beach until you’re out of the fast-moving water, then swim back in.
-                </p>
-              </div>
-            </div>
+            <div class="col-6"><div class="card">
+              <h3 style="margin-top:0">Rip currents</h3>
+              <p class="small">If you feel yourself being pulled away from shore, stay calm and avoid fighting the current directly. Swim parallel to the beach until you’re out of the fast-moving water, then swim back in.</p>
+            </div></div>
 
-            <div class="col-6">
-              <div class="card soft">
-                <h3 style="margin:0 0 6px 0">Cold water shock</h3>
-                <p class="small">
-                  Cold water can trigger sudden gasping and rapid breathing. Enter slowly, control your breathing,
-                  and use a wetsuit when appropriate.
-                </p>
-              </div>
-            </div>
+            <div class="col-6"><div class="card">
+              <h3 style="margin-top:0">Cold water shock</h3>
+              <p class="small">Cold water can trigger sudden gasping and rapid breathing. Enter slowly, control your breathing, and use a wetsuit when appropriate.</p>
+            </div></div>
 
-            <div class="col-6">
-              <div class="card soft">
-                <h3 style="margin:0 0 6px 0">Tide awareness</h3>
-                <p class="small">
-                  Outgoing tides can strengthen currents around piers, rocks, and narrow channels.
-                  Plan entry/exit points and avoid swimming alone in unfamiliar areas.
-                </p>
-              </div>
-            </div>
+            <div class="col-6"><div class="card">
+              <h3 style="margin-top:0">Tide awareness</h3>
+              <p class="small">Outgoing tides can strengthen currents around piers, rocks, and narrow channels. Plan entry/exit points and avoid swimming alone in unfamiliar areas.</p>
+            </div></div>
 
-            <div class="col-6">
-              <div class="card soft">
-                <h3 style="margin:0 0 6px 0">Before you swim</h3>
-                <p class="small">
-                  Check flags, swell, wind direction, and visibility. Tell someone your plan and swim within your limits.
-                </p>
-              </div>
-            </div>
-
+            <div class="col-6"><div class="card">
+              <h3 style="margin-top:0">Before you swim</h3>
+              <p class="small">Check flags, swell, wind direction, and visibility. Tell someone your plan and swim within your limits.</p>
+            </div></div>
           </div>
         </div>
 
@@ -983,7 +937,7 @@
   </div>
 
   <script>
-    // Tabs (no dependencies)
+    // Tabs
     (function(){
       const btns = Array.from(document.querySelectorAll('.tabbtn'));
       const panes = Array.from(document.querySelectorAll('.tabpane'));
@@ -1007,15 +961,13 @@
       }
     })();
 
-    // Client-side search for reports
+    // Client-side search
     (function(){
       const input = document.getElementById('reportSearch');
       const rows = Array.from(document.querySelectorAll('.reportRow'));
       if(!input || rows.length === 0) return;
 
-      function normalize(s){
-        return (s || '').toString().toLowerCase().trim();
-      }
+      function normalize(s){ return (s || '').toString().toLowerCase().trim(); }
 
       input.addEventListener('input', () => {
         const q = normalize(input.value);
@@ -1028,7 +980,6 @@
   </script>
 </body>
 </html>
-
 
 
 
