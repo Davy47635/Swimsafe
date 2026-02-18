@@ -7,25 +7,27 @@
 
   <style>
     :root{
-      /* Lifeguard-style ocean theme */
-      --bg: radial-gradient(1200px 600px at 10% -10%, #0f2a44 0%, #061726 55%, #050f1a 100%);
-      --card: rgba(255,255,255,0.06);
-      --card-strong: rgba(255,255,255,0.09);
-      --line: rgba(255,255,255,0.14);
+      /* Lifeguard-style ocean theme (LIGHTER) */
+      --bg: radial-gradient(1200px 600px at 10% -10%, #1a4b7a 0%, #0d2f52 55%, #081e35 100%);
+
+      /* Lighter surfaces for readability */
+      --card: rgba(255,255,255,0.10);
+      --card-strong: rgba(255,255,255,0.14);
+      --line: rgba(255,255,255,0.18);
       --text: #f8fafc;
-      --muted: #cbd5e1;
+      --muted: rgba(248,250,252,0.72);
 
       --btn: #3b82f6;
       --btn-hover: #2563eb;
-      --btn-soft: rgba(59,130,246,0.15);
+      --btn-soft: rgba(59,130,246,0.18);
 
       --ok: #22c55e;
       --warn: #fbbf24;
       --danger: #ef4444;
 
       --shadow:
-        0 0 0 1px rgba(255,255,255,0.04),
-        0 20px 40px rgba(2,6,23,.6);
+        0 0 0 1px rgba(255,255,255,0.05),
+        0 18px 36px rgba(2,6,23,.45);
     }
 
     *{box-sizing:border-box}
@@ -61,10 +63,10 @@
     }
     .dot{
       width:36px;height:36px;border-radius:12px;
-      background: rgba(34,211,238,0.18);
-      border:1px solid rgba(34,211,238,0.28);
+      background: rgba(34,211,238,0.20);
+      border:1px solid rgba(34,211,238,0.30);
       display:grid;place-items:center;
-      box-shadow: 0 0 0 6px rgba(34,211,238,0.07);
+      box-shadow: 0 0 0 6px rgba(34,211,238,0.09);
     }
     .dot::after{
       content:"≈";
@@ -79,7 +81,7 @@
       color: rgba(248,250,252,0.92);
     }
     .nav-links a:hover{
-      background: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.10);
       text-decoration:none;
     }
 
@@ -101,11 +103,11 @@
       padding:8px 12px;
       border:1px solid var(--line);
       border-radius:999px;
-      background: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.10);
       font-size:13px;
       color:var(--muted);
-      box-shadow:0 1px 0 rgba(255,255,255,0.03);
-      backdrop-filter: blur(8px);
+      box-shadow:0 1px 0 rgba(255,255,255,0.04);
+      backdrop-filter: blur(10px);
     }
     .pill strong{color:var(--text);font-weight:900}
 
@@ -116,7 +118,7 @@
       border-radius:16px;
       padding:16px;
       box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
     }
     .grid{
       display:grid;
@@ -137,9 +139,9 @@
     }
     .kpi .icon{
       width:40px;height:40px;border-radius:14px;
-      border:1px solid rgba(255,255,255,0.12);
+      border:1px solid rgba(255,255,255,0.16);
       display:grid;place-items:center;
-      background: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.10);
       color: var(--text);
       flex:0 0 auto;
     }
@@ -152,9 +154,9 @@
       padding:12px 14px;
       border-radius:14px;
       border:1px solid var(--line);
-      background: rgba(255,255,255,0.06);
-      box-shadow:0 1px 0 rgba(255,255,255,0.03);
-      backdrop-filter: blur(10px);
+      background: rgba(255,255,255,0.10);
+      box-shadow:0 1px 0 rgba(255,255,255,0.04);
+      backdrop-filter: blur(12px);
     }
 
     /* Tabs */
@@ -163,21 +165,21 @@
       margin-top:14px;
     }
     .tabbtn{
-      border:1px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
       color: var(--muted);
       padding:10px 12px;
       border-radius:14px;
       font-weight:900;
       cursor:pointer;
       font-size:14px;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
     }
-    .tabbtn:hover{background: rgba(255,255,255,0.08)}
+    .tabbtn:hover{background: rgba(255,255,255,0.14)}
     .tabbtn.active{
       color: var(--text);
-      border-color: rgba(59,130,246,0.35);
-      background: rgba(59,130,246,0.16);
+      border-color: rgba(59,130,246,0.45);
+      background: rgba(59,130,246,0.22);
     }
     .tabpane{display:none;margin-top:14px}
     .tabpane.active{display:block}
@@ -187,21 +189,22 @@
     select, textarea, input[type="text"]{
       width:100%;
       padding:10px 12px;
-      border:1px solid rgba(255,255,255,0.14);
+      border:1px solid rgba(255,255,255,0.18);
       border-radius:14px;
-      background: rgba(2,6,23,0.35);
+      background: rgba(255,255,255,0.08); /* lighter than before */
       color: var(--text);
       font: inherit;
       outline:none;
     }
     select:focus, textarea:focus, input[type="text"]:focus{
-      border-color: rgba(59,130,246,0.55);
-      box-shadow:0 0 0 3px rgba(59,130,246,.18);
+      border-color: rgba(59,130,246,0.65);
+      box-shadow:0 0 0 3px rgba(59,130,246,.22);
     }
     textarea{min-height:70px;resize:vertical}
+
     .btn{
       background: var(--btn);
-      border:1px solid rgba(59,130,246,0.65);
+      border:1px solid rgba(59,130,246,0.70);
       color:#fff;
       font-weight:900;
       padding:10px 12px;
@@ -211,12 +214,12 @@
     }
     .btn:hover{background: var(--btn-hover)}
     .btn.secondary{
-      background: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.10);
       color: var(--text);
-      border-color: rgba(255,255,255,0.14);
+      border-color: rgba(255,255,255,0.18);
       font-weight:900;
     }
-    .btn.secondary:hover{background: rgba(255,255,255,0.09)}
+    .btn.secondary:hover{background: rgba(255,255,255,0.14)}
 
     .btn.small{
       padding:8px 10px;
@@ -244,23 +247,23 @@
 
     /* Table */
     .tablewrap{
-      border:1px solid rgba(255,255,255,0.14);
+      border:1px solid rgba(255,255,255,0.18);
       border-radius:16px;
       overflow:hidden;
-      background: rgba(255,255,255,0.04);
-      backdrop-filter: blur(10px);
+      background: rgba(255,255,255,0.08); /* lighter */
+      backdrop-filter: blur(12px);
     }
     table{width:100%;border-collapse:collapse}
     th,td{padding:12px 12px;text-align:left;vertical-align:top}
     thead th{
-      background: rgba(255,255,255,0.05);
-      color: var(--muted);
+      background: rgba(255,255,255,0.10);
+      color: rgba(248,250,252,0.78);
       font-size:13px;
       font-weight:900;
-      border-bottom:1px solid rgba(255,255,255,0.12);
+      border-bottom:1px solid rgba(255,255,255,0.14);
     }
-    tbody tr{border-top:1px solid rgba(255,255,255,0.10)}
-    tbody tr:hover{background: rgba(255,255,255,0.05)}
+    tbody tr{border-top:1px solid rgba(255,255,255,0.12)}
+    tbody tr:hover{background: rgba(255,255,255,0.10)}
     .small{font-size:13px;color:var(--muted)}
     .nowrap{white-space:nowrap}
 
@@ -276,10 +279,10 @@
       border:1px solid transparent;
       white-space:nowrap;
     }
-    .chip.ok{background: rgba(34,197,94,0.16); color:#bbf7d0; border-color: rgba(34,197,94,0.35)}
-    .chip.warn{background: rgba(251,191,36,0.16); color:#fde68a; border-color: rgba(251,191,36,0.35)}
-    .chip.bad{background: rgba(239,68,68,0.16); color:#fecaca; border-color: rgba(239,68,68,0.35)}
-    .chip.neutral{background: rgba(148,163,184,0.12); color:#e2e8f0; border-color: rgba(148,163,184,0.25)}
+    .chip.ok{background: rgba(34,197,94,0.18); color:#bbf7d0; border-color: rgba(34,197,94,0.40)}
+    .chip.warn{background: rgba(251,191,36,0.18); color:#fde68a; border-color: rgba(251,191,36,0.40)}
+    .chip.bad{background: rgba(239,68,68,0.18); color:#fecaca; border-color: rgba(239,68,68,0.40)}
+    .chip.neutral{background: rgba(148,163,184,0.16); color:#e2e8f0; border-color: rgba(148,163,184,0.30)}
     .chip .dot2{
       width:8px;height:8px;border-radius:999px;background:currentColor;
       opacity:.85;
@@ -288,9 +291,9 @@
     /* Empty state */
     .empty{
       padding:16px;
-      border:1px dashed rgba(255,255,255,0.16);
+      border:1px dashed rgba(255,255,255,0.20);
       border-radius:16px;
-      background: rgba(255,255,255,0.04);
+      background: rgba(255,255,255,0.08);
       color:var(--muted);
     }
     .empty strong{color:var(--text)}
@@ -316,20 +319,20 @@
     }
     .stat{
       grid-column: span 6;
-      border:1px solid rgba(255,255,255,0.14);
+      border:1px solid rgba(255,255,255,0.18);
       border-radius:14px;
       padding:10px;
-      background: rgba(2,6,23,0.28);
+      background: rgba(255,255,255,0.08); /* lighter */
     }
     .stat .k{font-size:12px;color:var(--muted);margin:0}
     .stat .v{font-size:14px;font-weight:950;margin:6px 0 0 0}
 
     details{
       margin-top:10px;
-      border:1px solid rgba(255,255,255,0.14);
+      border:1px solid rgba(255,255,255,0.18);
       border-radius:14px;
       padding:10px 12px;
-      background: rgba(2,6,23,0.22);
+      background: rgba(255,255,255,0.08); /* lighter */
     }
     details summary{
       cursor:pointer;
@@ -348,11 +351,12 @@
       color:var(--muted);
     }
 
+    /* Favourites */
     .favlist{
       margin-top:10px;
-      border:1px solid rgba(255,255,255,0.14);
+      border:1px solid rgba(255,255,255,0.18);
       border-radius:16px;
-      background: rgba(2,6,23,0.22);
+      background: rgba(255,255,255,0.08); /* lighter */
       overflow:hidden;
     }
     .favitem{
@@ -361,7 +365,7 @@
       justify-content:space-between;
       gap:10px;
       padding:12px 12px;
-      border-top:1px solid rgba(255,255,255,0.10);
+      border-top:1px solid rgba(255,255,255,0.12);
     }
     .favitem:first-child{border-top:none}
     .favname{
@@ -801,7 +805,7 @@
         <div id="tabIssue" class="tabpane" role="tabpanel">
           <div class="grid">
             <div class="col-8">
-              <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.05)">
+              <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.10)">
                 <h2 style="margin:0 0 6px 0">Report an issue</h2>
                 <p class="subtitle" style="margin:0 0 14px 0">
                   Reports are shared with lifeguards to improve awareness and response.
@@ -853,7 +857,7 @@
             </div>
 
             <div class="col-4">
-              <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.05)">
+              <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.10)">
                 <h3 style="margin-top:0">What should I report?</h3>
                 <ul class="small" style="margin:10px 0 0 18px;color:var(--muted)">
                   <li>Rip currents / strong outgoing tides</li>
@@ -878,7 +882,7 @@
 
             <div class="col-12">
               {% if swimmer_tips is defined and swimmer_tips|length > 0 %}
-                <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.05)">
+                <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.10)">
                   <h3 style="margin-top:0">Live safety tips</h3>
                   <p class="small">Generated from the current flag/tide/API advisory (rule-based).</p>
                   <ul class="clean">
@@ -896,7 +900,7 @@
             </div>
 
             <div class="col-6">
-              <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.05)">
+              <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.10)">
                 <h3 style="margin-top:0">Rip currents</h3>
                 <p class="small">
                   If you feel yourself being pulled away from shore, stay calm and avoid fighting the current directly.
@@ -906,7 +910,7 @@
             </div>
 
             <div class="col-6">
-              <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.05)">
+              <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.10)">
                 <h3 style="margin-top:0">Cold water shock</h3>
                 <p class="small">
                   Cold water can trigger sudden gasping and rapid breathing. Enter slowly, control your breathing,
@@ -916,7 +920,7 @@
             </div>
 
             <div class="col-6">
-              <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.05)">
+              <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.10)">
                 <h3 style="margin-top:0">Tide awareness</h3>
                 <p class="small">
                   Outgoing tides can strengthen currents around piers, rocks, and narrow channels.
@@ -926,7 +930,7 @@
             </div>
 
             <div class="col-6">
-              <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.05)">
+              <div class="card" style="box-shadow:none;background:rgba(255,255,255,0.10)">
                 <h3 style="margin-top:0">Before you swim</h3>
                 <p class="small">
                   Check flags, swell, wind direction, and visibility. Tell someone your plan and swim within your limits.
@@ -988,6 +992,7 @@
   </script>
 </body>
 </html>
+
 
 
 
