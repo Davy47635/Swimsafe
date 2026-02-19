@@ -361,6 +361,20 @@
     }
     .btn-danger:hover{ transform: translateY(-1px); background: rgba(255,93,108,.16); }
 
+    .btn-ok{
+      background: rgba(45,212,191,.12);
+      border-color: rgba(45,212,191,.25);
+      color: var(--text);
+    }
+    .btn-ok:hover{ transform: translateY(-1px); background: rgba(45,212,191,.16); }
+
+    .btn-warn{
+      background: rgba(255,209,102,.12);
+      border-color: rgba(255,209,102,.25);
+      color: var(--text);
+    }
+    .btn-warn:hover{ transform: translateY(-1px); background: rgba(255,209,102,.16); }
+
     .hint{
       margin: 10px 0 0;
       color: var(--muted2);
@@ -378,7 +392,7 @@
     table{
       width:100%;
       border-collapse: collapse;
-      min-width: 920px;
+      min-width: 1100px; /* widened due to new columns */
     }
     th, td{
       padding: 12px 12px;
@@ -416,7 +430,7 @@
     }
     @media (max-width: 820px){
       .stats{ grid-template-columns: 1fr; }
-      table{ min-width: 760px; }
+      table{ min-width: 980px; }
     }
     .stat{
       border-radius: 16px;
@@ -456,6 +470,45 @@
     .badge.ok{ border-color: rgba(45,212,191,.35); background: rgba(45,212,191,.12); }
     .badge.warn{ border-color: rgba(255,209,102,.35); background: rgba(255,209,102,.12); }
     .badge.bad{ border-color: rgba(255,93,108,.35); background: rgba(255,93,108,.12); }
+
+    /* Safety + status pills */
+    .pilltag{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .pilltag.low{ border-color: rgba(45,212,191,.35); background: rgba(45,212,191,.12); color: var(--text); }
+    .pilltag.caution{ border-color: rgba(255,209,102,.35); background: rgba(255,209,102,.12); color: var(--text); }
+    .pilltag.unsafe{ border-color: rgba(255,93,108,.35); background: rgba(255,93,108,.12); color: var(--text); }
+    .pilltag.nodata{ border-color: rgba(255,255,255,.18); background: rgba(0,0,0,.20); color: var(--muted); }
+
+    details{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(7,18,37,.25);
+      padding: 10px 12px;
+    }
+    details summary{
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 900;
+      font-size: 12px;
+      list-style: none;
+    }
+    details summary::-webkit-details-marker{ display:none; }
+    .details-body{
+      margin-top: 10px;
+      color: rgba(234,242,255,.92);
+      font-size: 12px;
+      line-height: 1.45;
+    }
 
     footer{
       margin-top: 18px;
@@ -527,8 +580,8 @@
       <div>
         <h1>Session Planner</h1>
         <p>
-          Plan your next open-water swim with structured details (goal, intensity, distance/time) and keep a clean list of upcoming and past sessions.
-          This is stored per user, so each swimmer has their own planner.
+          Plan your next open-water swim with structured details (goal, intensity, distance/time). New: choose a preset, see a light safety badge for upcoming sessions,
+          and log completed/skipped sessions.
         </p>
       </div>
 
@@ -546,7 +599,9 @@
         <div class="card-head">
           <div>
             <h2>Upcoming Sessions</h2>
-            <div class="small">Your planned swims (soonest first). Use the planner on the right to add a new one.</div>
+            <div class="small">
+              Soonest first. New: safety badge (API) + training log actions (complete/skip).
+            </div>
           </div>
           <div class="chip">Next swims</div>
         </div>
@@ -561,7 +616,9 @@
                 <th class="nowrap">Intensity</th>
                 <th class="nowrap">Duration</th>
                 <th class="nowrap">Distance</th>
-                <th>Notes</th>
+                <th class="nowrap">Safety</th>
+                <th class="nowrap">Status</th>
+                <th>Log / Actions</th>
                 <th class="nowrap">Delete</th>
               </tr>
             </thead>
@@ -574,6 +631,13 @@
                 {% elif "moderate" in intensity_lower %}
                   {% set intensity_class = "warn" %}
                 {% endif %}
+
+                {% set o = outcome_by_session.get(s.id) if outcome_by_session else None %}
+                {% set status = (o.status if o else "planned") %}
+
+                {% set adv = safety_by_session.get(s.id) if safety_by_session else None %}
+                {% set adv_level = (adv.level if adv else "") %}
+                {% set adv_class = (adv.level_class if adv and adv.level_class else "") %}
 
                 <tr>
                   <td class="nowrap">
@@ -594,7 +658,120 @@
                   </td>
                   <td class="nowrap">{{ (s.duration_min ~ " min") if s.duration_min else "—" }}</td>
                   <td class="nowrap">{{ (s.distance_m ~ " m") if s.distance_m else "—" }}</td>
-                  <td>{{ s.notes or "" }}</td>
+
+                  <!-- Safety badge -->
+                  <td class="nowrap">
+                    {% if adv %}
+                      {% if adv.level_class == "unsafe" %}
+                        <span class="pilltag unsafe">UNSAFE</span>
+                      {% elif adv.level_class == "caution" %}
+                        <span class="pilltag caution">CAUTION</span>
+                      {% elif adv.level_class == "low" %}
+                        <span class="pilltag low">LOW</span>
+                      {% else %}
+                        <span class="pilltag nodata">NO DATA</span>
+                      {% endif %}
+                      {% if adv.reasons and adv.reasons|length > 0 %}
+                        <div class="muted" style="font-size:11px; margin-top:6px;">
+                          {{ adv.reasons[0] }}
+                        </div>
+                      {% endif %}
+                    {% else %}
+                      <span class="pilltag nodata">NO DATA</span>
+                      <div class="muted" style="font-size:11px; margin-top:6px;">API not available / skipped.</div>
+                    {% endif %}
+                  </td>
+
+                  <!-- Status -->
+                  <td class="nowrap">
+                    {% if status == "completed" %}
+                      <span class="pilltag low">COMPLETED</span>
+                      {% if o and o.completed_at %}
+                        <div class="muted" style="font-size:11px; margin-top:6px;">
+                          {{ o.completed_at.strftime("%Y-%m-%d %H:%M") }}
+                        </div>
+                      {% endif %}
+                    {% elif status == "skipped" %}
+                      <span class="pilltag caution">SKIPPED</span>
+                      {% if o and o.completed_at %}
+                        <div class="muted" style="font-size:11px; margin-top:6px;">
+                          {{ o.completed_at.strftime("%Y-%m-%d %H:%M") }}
+                        </div>
+                      {% endif %}
+                    {% else %}
+                      <span class="pilltag nodata">PLANNED</span>
+                    {% endif %}
+                  </td>
+
+                  <!-- Log / Actions -->
+                  <td>
+                    <details>
+                      <summary>Log result</summary>
+                      <div class="details-body">
+
+                        <!-- Complete form -->
+                        <form method="post" action="{{ url_for('complete_swimmer_session', session_id=s.id) }}" style="margin-top:8px;">
+                          <div class="row2">
+                            <div>
+                              <label>RPE (1–10)</label>
+                              <div class="field" style="margin-bottom:10px;">
+                                <input type="number" name="rpe" min="1" max="10" step="1" placeholder="e.g. 6">
+                              </div>
+                            </div>
+                            <div>
+                              <label>Actual duration (min)</label>
+                              <div class="field" style="margin-bottom:10px;">
+                                <input type="number" name="actual_duration_min" min="1" step="1" placeholder="e.g. 38">
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="row2">
+                            <div>
+                              <label>Actual distance (m)</label>
+                              <div class="field" style="margin-bottom:10px;">
+                                <input type="number" name="actual_distance_m" min="50" step="50" placeholder="e.g. 1600">
+                              </div>
+                            </div>
+                            <div>
+                              <label>Notes</label>
+                              <div class="field" style="margin-bottom:10px;">
+                                <input type="text" name="outcome_notes" maxlength="255" placeholder="How it went / conditions / kit notes">
+                              </div>
+                            </div>
+                          </div>
+
+                          <button type="submit" class="btn btn-ok" style="padding: 9px 12px; border-radius: 12px;">
+                            Mark completed
+                          </button>
+                        </form>
+
+                        <!-- Skip form -->
+                        <form method="post" action="{{ url_for('skip_swimmer_session', session_id=s.id) }}" style="margin-top:12px;">
+                          <label>Skip reason (optional)</label>
+                          <div class="field" style="margin-bottom:10px;">
+                            <input type="text" name="outcome_notes" maxlength="255" placeholder="e.g. weather, schedule, tired, safety...">
+                          </div>
+                          <button type="submit" class="btn btn-warn" style="padding: 9px 12px; border-radius: 12px;">
+                            Mark skipped
+                          </button>
+                        </form>
+
+                        {% if o and (o.rpe or o.actual_duration_min or o.actual_distance_m or o.outcome_notes) %}
+                          <div class="muted" style="margin-top:12px; font-size:12px;">
+                            <strong style="color:var(--text);">Latest log:</strong>
+                            {% if o.rpe %} RPE {{ o.rpe }} ·{% endif %}
+                            {% if o.actual_duration_min %} {{ o.actual_duration_min }} min ·{% endif %}
+                            {% if o.actual_distance_m %} {{ o.actual_distance_m }} m ·{% endif %}
+                            {{ o.outcome_notes if o.outcome_notes else "" }}
+                          </div>
+                        {% endif %}
+
+                      </div>
+                    </details>
+                  </td>
+
+                  <!-- Delete -->
                   <td class="nowrap">
                     <form method="post"
                           action="{{ url_for('delete_swimmer_session', session_id=s.id) }}"
@@ -605,7 +782,7 @@
                 </tr>
               {% else %}
                 <tr>
-                  <td colspan="8" class="muted">No upcoming sessions planned yet.</td>
+                  <td colspan="10" class="muted">No upcoming sessions planned yet.</td>
                 </tr>
               {% endfor %}
             </tbody>
@@ -615,7 +792,7 @@
             <div class="stat">
               <strong>Tip</strong>
               <span style="font-size:13px; font-weight:800; color: var(--muted);">
-                Pick a favourite beach on the Swimmer page so it’s quicker to plan repeats.
+                Use a preset to fill most fields instantly, then tweak beach/time.
               </span>
             </div>
             <div class="stat">
@@ -627,7 +804,7 @@
             <div class="stat">
               <strong>Safety</strong>
               <span style="font-size:13px; font-weight:800; color: var(--muted);">
-                Always assess entry/exit and currents on arrival (conditions change fast).
+                Safety badge is a guide only — always assess conditions on arrival.
               </span>
             </div>
           </div>
@@ -639,7 +816,7 @@
         <div class="card-head">
           <div>
             <h2>Plan a New Session</h2>
-            <div class="small">Create a structured plan (date/time, beach, goal, effort, and optional notes).</div>
+            <div class="small">New: pick a preset to auto-fill plan fields. You can still edit anything after.</div>
           </div>
           <div class="chip" title="Required fields">
             * required
@@ -648,6 +825,21 @@
 
         <div class="card-inner">
           <form method="post" action="{{ url_for('create_swimmer_session') }}" id="planForm">
+
+            <!-- Presets (NEW) -->
+            <label for="preset_id">Session preset (optional)</label>
+            <div class="field">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H7v-2h3v2zm0-4H7v-2h3v2zm0-4H7V7h3v2zm7 8h-5v-2h5v2zm0-4h-5v-2h5v2zm0-4h-5V7h5v2z"/></svg>
+              <select id="preset_id" name="preset_id">
+                <option value="">-- choose preset (optional) --</option>
+                {% for p in presets or [] %}
+                  <option value="{{ p.id }}">{{ p.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="hint" style="margin-top:-4px;">
+              Presets fill goal/intensity/skill + suggested duration/distance/notes. You can override anything.
+            </div>
 
             <label for="beach_id">Beach *</label>
             <div class="field">
@@ -734,8 +926,8 @@
             </div>
 
             <p class="hint">
-              Note: your `create_swimmer_session()` route requires at least <strong>duration</strong> or <strong>distance</strong>.
-              Keep notes short (max 255 chars).
+              Your route requires at least <strong>duration</strong> or <strong>distance</strong>.
+              Notes max 255 chars. Presets are optional.
             </p>
           </form>
         </div>
@@ -748,7 +940,7 @@
       <div class="card-head">
         <div>
           <h2>Recent Past Sessions</h2>
-          <div class="small">Sessions with a planned time in the past (latest first). Use these as a simple history log.</div>
+          <div class="small">Past planned time (latest first). Now shows status if you logged it.</div>
         </div>
         <div class="chip">Recent: <strong style="color: var(--text);">{{ recent_sessions|length }}</strong></div>
       </div>
@@ -763,7 +955,8 @@
               <th class="nowrap">Intensity</th>
               <th class="nowrap">Duration</th>
               <th class="nowrap">Distance</th>
-              <th>Notes</th>
+              <th class="nowrap">Status</th>
+              <th>Log</th>
               <th class="nowrap">Delete</th>
             </tr>
           </thead>
@@ -776,6 +969,9 @@
               {% elif "moderate" in intensity_lower %}
                 {% set intensity_class = "warn" %}
               {% endif %}
+
+              {% set o = outcome_by_session.get(s.id) if outcome_by_session else None %}
+              {% set status = (o.status if o else "planned") %}
 
               <tr>
                 <td class="nowrap">
@@ -792,7 +988,35 @@
                 <td class="nowrap"><span class="badge {{ intensity_class }}"><strong>Intensity</strong> {{ s.intensity }}</span></td>
                 <td class="nowrap">{{ (s.duration_min ~ " min") if s.duration_min else "—" }}</td>
                 <td class="nowrap">{{ (s.distance_m ~ " m") if s.distance_m else "—" }}</td>
-                <td>{{ s.notes or "" }}</td>
+
+                <td class="nowrap">
+                  {% if status == "completed" %}
+                    <span class="pilltag low">COMPLETED</span>
+                  {% elif status == "skipped" %}
+                    <span class="pilltag caution">SKIPPED</span>
+                  {% else %}
+                    <span class="pilltag nodata">PLANNED</span>
+                  {% endif %}
+                  {% if o and o.completed_at %}
+                    <div class="muted" style="font-size:11px; margin-top:6px;">
+                      {{ o.completed_at.strftime("%Y-%m-%d %H:%M") }}
+                    </div>
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if o and (o.rpe or o.actual_duration_min or o.actual_distance_m or o.outcome_notes) %}
+                    <div class="muted" style="font-size:12px;">
+                      {% if o.rpe %}<strong style="color:var(--text)">RPE:</strong> {{ o.rpe }} · {% endif %}
+                      {% if o.actual_duration_min %}<strong style="color:var(--text)">Dur:</strong> {{ o.actual_duration_min }}m · {% endif %}
+                      {% if o.actual_distance_m %}<strong style="color:var(--text)">Dist:</strong> {{ o.actual_distance_m }}m · {% endif %}
+                      {{ o.outcome_notes if o.outcome_notes else "" }}
+                    </div>
+                  {% else %}
+                    <span class="muted">—</span>
+                  {% endif %}
+                </td>
+
                 <td class="nowrap">
                   <form method="post"
                         action="{{ url_for('delete_swimmer_session', session_id=s.id) }}"
@@ -802,7 +1026,7 @@
                 </td>
               </tr>
             {% else %}
-              <tr><td colspan="8" class="muted">No past sessions found.</td></tr>
+              <tr><td colspan="9" class="muted">No past sessions found.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -824,7 +1048,7 @@
   </main>
 
   <script>
-    // Small UX: set datetime-local default to "now + 1 hour" (rounded to 5 mins)
+    // Default datetime-local to "now + 1 hour" (rounded to 5 mins)
     (function(){
       const el = document.getElementById("planned_for");
       if(!el) return;
@@ -842,7 +1066,48 @@
         pad(d.getMinutes());
       el.value = v;
     })();
+
+    // Presets (NEW): auto-fill fields from SESSION_PRESETS passed to template
+    (function(){
+      const presetSelect = document.getElementById("preset_id");
+      if(!presetSelect) return;
+
+      const goalEl = document.getElementById("goal");
+      const intensityEl = document.getElementById("intensity");
+      const skillEl = document.getElementById("skill_level");
+      const durEl = document.getElementById("duration_min");
+      const distEl = document.getElementById("distance_m");
+      const notesEl = document.getElementById("notes");
+
+      const presets = {{ (presets or []) | tojson }};
+
+      function applyPreset(p){
+        if(!p) return;
+        if(goalEl && p.goal) goalEl.value = p.goal;
+        if(intensityEl && p.intensity) intensityEl.value = p.intensity;
+        if(skillEl && p.skill_level) skillEl.value = p.skill_level;
+
+        // duration/distance can be null
+        if(durEl) durEl.value = (p.duration_min != null ? p.duration_min : "");
+        if(distEl) distEl.value = (p.distance_m != null ? p.distance_m : "");
+
+        // only overwrite notes if empty (so you don't lose typing)
+        if(notesEl && p.notes){
+          if(!notesEl.value || notesEl.value.trim().length === 0){
+            notesEl.value = p.notes;
+          }
+        }
+      }
+
+      presetSelect.addEventListener("change", function(){
+        const id = (this.value || "").trim();
+        if(!id) return;
+        const p = presets.find(x => x.id === id);
+        applyPreset(p);
+      });
+    })();
   </script>
 
 </body>
 </html>
+

@@ -79,6 +79,52 @@ def allowed_file(filename: str) -> bool:
     return ext in ALLOWED_EXTENSIONS
 
 
+# ================================
+# SESSION PRESETS (NEW)
+# ================================
+SESSION_PRESETS = [
+    {
+        "id": "easy_recovery",
+        "name": "Easy Recovery (20–30 min)",
+        "goal": "Endurance",
+        "intensity": "Easy",
+        "skill_level": "Beginner",
+        "duration_min": 25,
+        "distance_m": None,
+        "notes": "Easy continuous swim. Focus on relaxed breathing and sighting.",
+    },
+    {
+        "id": "endurance_steady",
+        "name": "Steady Endurance (45 min / ~1500m)",
+        "goal": "Endurance",
+        "intensity": "Moderate",
+        "skill_level": "Intermediate",
+        "duration_min": 45,
+        "distance_m": 1500,
+        "notes": "Steady pace. Practice sighting every 6–10 strokes. Keep effort controlled.",
+    },
+    {
+        "id": "technique_drills",
+        "name": "Technique Focus (30 min drills)",
+        "goal": "Technique",
+        "intensity": "Easy",
+        "skill_level": "Intermediate",
+        "duration_min": 30,
+        "distance_m": None,
+        "notes": "Include a drill block (catch, body position, bilateral breathing) + short easy swims.",
+    },
+    {
+        "id": "race_pace",
+        "name": "Race-Pace Intervals (advanced)",
+        "goal": "Race-pace",
+        "intensity": "Hard",
+        "skill_level": "Advanced",
+        "duration_min": 40,
+        "distance_m": 2000,
+        "notes": "Warm up → 6–10 x hard efforts with rest → cool down. Only if conditions are safe.",
+    },
+]
+
 # ---- Models ----
 class Beach(db.Model):
     __tablename__ = "beaches"
@@ -171,6 +217,29 @@ class SwimSessionPlan(db.Model):
     )
 
 
+# ================================
+# --- SwimSafe: SWIM SESSION OUTCOME / TRAINING LOG (NEW) ---
+# ================================
+class SwimSessionOutcome(db.Model):
+    __tablename__ = "swim_session_outcomes"
+    id = db.Column(db.Integer, primary_key=True)
+
+    session_id = db.Column(db.Integer, db.ForeignKey("swim_session_plans.id"), nullable=False, unique=True)
+
+    # planned / completed / skipped
+    status = db.Column(db.String(20), nullable=False, default="planned")
+
+    # optional “how it went”
+    rpe = db.Column(db.Integer)  # 1–10
+    actual_duration_min = db.Column(db.Integer)
+    actual_distance_m = db.Column(db.Integer)
+    outcome_notes = db.Column(db.String(255))
+
+    completed_at = db.Column(db.DateTime)
+
+    session = db.relationship("SwimSessionPlan")
+
+
 # ---- Beach Photos ----
 class BeachPhoto(db.Model):
     __tablename__ = "beach_photos"
@@ -255,7 +324,6 @@ def get_marine_conditions(lat: float, lng: float):
     if not STORMGLASS_API_KEY:
         return None
 
-    # Added currents where available (plan/coverage dependent).
     params = ",".join([
         "waveHeight",
         "waveDirection",
@@ -318,11 +386,96 @@ def get_marine_conditions(lat: float, lng: float):
         return None
 
 
+# ================================
+# --- SwimSafe: Forecast at planned session time (NEW)
+# ================================
+def get_marine_conditions_at(lat: float, lng: float, when_dt: datetime):
+    """
+    Fetch marine conditions around a planned datetime (UTC/naive).
+    Returns same structure as get_marine_conditions() or None.
+    """
+    if not STORMGLASS_API_KEY:
+        return None
+
+    params = ",".join([
+        "waveHeight",
+        "waveDirection",
+        "wavePeriod",
+        "swellHeight",
+        "swellDirection",
+        "windSpeed",
+        "windDirection",
+        "waterTemperature",
+        "currentSpeed",
+        "currentDirection",
+    ])
+
+    dt = when_dt.replace(minute=0, second=0, microsecond=0)
+    start = int((dt - timedelta(hours=1)).timestamp())
+    end = int((dt + timedelta(hours=1)).timestamp())
+
+    try:
+        r = requests.get(
+            STORMGLASS_ENDPOINT,
+            params={
+                "lat": lat,
+                "lng": lng,
+                "params": params,
+                "source": "noaa",
+                "start": start,
+                "end": end,
+            },
+            headers=_stormglass_headers(),
+            timeout=10,
+        )
+
+        if r.status_code != 200:
+            return None
+
+        data = r.json()
+        hours = data.get("hours", [])
+        if not hours:
+            return None
+
+        def parse_time(s):
+            try:
+                return datetime.fromisoformat(s.replace("Z", "+00:00")).replace(tzinfo=None)
+            except Exception:
+                return None
+
+        best = None
+        best_diff = None
+        for h in hours:
+            t = parse_time(h.get("time", ""))
+            if not t:
+                continue
+            diff = abs((t - dt).total_seconds())
+            if best is None or diff < best_diff:
+                best = h
+                best_diff = diff
+
+        if not best:
+            best = hours[0]
+
+        return {
+            "wave_height": _safe_hour_value(best, "waveHeight"),
+            "wave_direction": _safe_hour_value(best, "waveDirection"),
+            "wave_period": _safe_hour_value(best, "wavePeriod"),
+            "swell_height": _safe_hour_value(best, "swellHeight"),
+            "swell_direction": _safe_hour_value(best, "swellDirection"),
+            "wind_speed": _safe_hour_value(best, "windSpeed"),
+            "wind_direction": _safe_hour_value(best, "windDirection"),
+            "water_temp": _safe_hour_value(best, "waterTemperature"),
+            "current_speed": _safe_hour_value(best, "currentSpeed"),
+            "current_direction": _safe_hour_value(best, "currentDirection"),
+            "time": best.get("time"),
+        }
+
+    except Exception:
+        return None
+
+
 def get_tide_sea_level(lat: float, lng: float, start_dt: datetime, end_dt: datetime, datum: str = "MSL"):
-    """
-    Tide Sea Level endpoint: returns hourly sea level in meters.
-    Stormglass expects start/end like YYYY-MM-DDTHH (UTC).
-    """
     if not STORMGLASS_API_KEY:
         return None
 
@@ -353,9 +506,6 @@ def get_tide_sea_level(lat: float, lng: float, start_dt: datetime, end_dt: datet
 
 
 def get_tide_extremes(lat: float, lng: float, start_dt: datetime, end_dt: datetime, datum: str = "MSL"):
-    """
-    Tide Extremes endpoint: returns times & heights for high/low tides.
-    """
     if not STORMGLASS_API_KEY:
         return None
 
@@ -390,34 +540,22 @@ def compute_tide_assist(
     lng: float,
     marine_data: Optional[Dict[str, Any]] = None
 ) -> Optional[Dict[str, str]]:
-    """
-    Returns:
-      {
-        "tide_state": "Rising/Falling/High/Low",
-        "tide_strength": "Weak/Moderate/Strong",
-        "tide_basis": "...",
-      }
-    Safe fallbacks: returns None if not enough data / no API key.
-    """
     if not STORMGLASS_API_KEY:
         return None
 
     now = datetime.utcnow()
 
-    # 1) Sea level for now & +1h (direction + fallback strength)
     sea = get_tide_sea_level(lat, lng, now, now + timedelta(hours=2))
 
     sea_now = None
     sea_next = None
 
     if sea and len(sea) >= 2:
-        # Stormglass typically returns items like {"time":"...","sg":1.23}
         def extract_height(item: dict):
             if not isinstance(item, dict):
                 return None
             if "sg" in item:
                 return _to_float(item.get("sg"))
-            # fallback keys (just in case)
             return _to_float(item.get("height") or item.get("value") or item.get("seaLevel"))
 
         sea_now = extract_height(sea[0])
@@ -425,9 +563,8 @@ def compute_tide_assist(
 
     delta_m = None
     if sea_now is not None and sea_next is not None:
-        delta_m = sea_next - sea_now  # approx per hour
+        delta_m = sea_next - sea_now
 
-    # 2) Extremes: nearest extreme within 60 minutes → High/Low
     extremes = get_tide_extremes(lat, lng, now - timedelta(hours=3), now + timedelta(hours=9))
     nearest = None
 
@@ -460,7 +597,6 @@ def compute_tide_assist(
     tide_strength = None
     tide_basis = None
 
-    # Prefer currentSpeed if present
     current_speed = None
     if marine_data:
         current_speed = _to_float(marine_data.get("current_speed"))
@@ -475,7 +611,7 @@ def compute_tide_assist(
         tide_basis = f"currentSpeed {current_speed:.2f} m/s"
     else:
         if delta_m is not None:
-            rate = abs(delta_m)  # m/hr proxy
+            rate = abs(delta_m)
             if rate >= 0.15:
                 tide_strength = "Strong"
             elif rate >= 0.05:
@@ -497,10 +633,6 @@ def compute_tide_assist(
 
 
 def build_safety_advisory(api_data: dict):
-    """
-    Rule-based advisory from API conditions.
-    Returns dict: {level, level_class, reasons[]} or None if no API data.
-    """
     if not api_data:
         return None
 
@@ -561,12 +693,6 @@ def build_safety_advisory(api_data: dict):
 # --- SwimSafe: ADDED for Swimmer Dashboard (safe additions) ---
 # ================================
 def _pick_primary_beach_for_swimmer(beach_id_str: str, reports: list, beaches_list: list):
-    """
-    Choose a beach to use for API/risk/tips:
-    - If filter is set and valid -> that beach
-    - Else try the beach of the latest report in the table
-    - Else fallback to first beach in directory
-    """
     try:
         if beach_id_str and beach_id_str.isdigit():
             return Beach.query.get(int(beach_id_str))
@@ -589,13 +715,8 @@ def _pick_primary_beach_for_swimmer(beach_id_str: str, reports: list, beaches_li
 
 
 def _swimmer_context_tips(latest_report: Optional["SeaReport"], advisory: Optional[dict], tide: Optional[dict]):
-    """
-    Returns a small list of short, high-value tips.
-    Purely rule-based, safe even when some data is missing.
-    """
     tips = []
 
-    # Flag-driven
     flag = None
     if latest_report:
         flag = (latest_report.flag_status or "").strip().lower()
@@ -607,7 +728,6 @@ def _swimmer_context_tips(latest_report: Optional["SeaReport"], advisory: Option
     elif flag == "green":
         tips.append("Green flag: conditions are generally safer, but always remain vigilant and assess entry/exit points.")
 
-    # Tide-driven
     if tide:
         state = (tide.get("tide_state") or "").strip().lower()
         strength = (tide.get("tide_strength") or "").strip().lower()
@@ -622,7 +742,6 @@ def _swimmer_context_tips(latest_report: Optional["SeaReport"], advisory: Option
         elif strength == "moderate":
             tips.append("Moderate tidal flow — stay aware of drift and choose a clear landmark for navigation.")
 
-    # Advisory-driven (API)
     if advisory:
         level = (advisory.get("level") or "").strip().upper()
         if level == "UNSAFE":
@@ -634,7 +753,6 @@ def _swimmer_context_tips(latest_report: Optional["SeaReport"], advisory: Option
         elif level == "NO DATA":
             tips.append("Limited API data available — rely more heavily on flags, local knowledge, and conditions on arrival.")
 
-    # Remove duplicates while preserving order
     deduped = []
     seen = set()
     for t in tips:
@@ -642,7 +760,6 @@ def _swimmer_context_tips(latest_report: Optional["SeaReport"], advisory: Option
             deduped.append(t)
             seen.add(t)
 
-    # Keep it short for the UI (can expand later)
     return deduped[:4]
 
 
@@ -771,6 +888,35 @@ def beach_detail(beach_id):
         .all()
     )
 
+    # ==========================
+    # Beach trends (last 7 days) from official reports (NEW)
+    # ==========================
+    since = datetime.utcnow() - timedelta(days=7)
+    week_reports = (
+        SeaReport.query
+        .filter(SeaReport.beach_id == beach_id, SeaReport.reported_at >= since)
+        .order_by(SeaReport.reported_at.desc())
+        .all()
+    )
+
+    trend = {
+        "count_7d": len(week_reports),
+        "flag_green": sum(1 for r in week_reports if (r.flag_status or "") == "Green"),
+        "flag_yellow": sum(1 for r in week_reports if (r.flag_status or "") == "Yellow"),
+        "flag_red": sum(1 for r in week_reports if (r.flag_status or "") == "Red"),
+        "avg_temp": None,
+    }
+
+    temps = []
+    for r in week_reports:
+        try:
+            if r.temp_c is not None:
+                temps.append(float(r.temp_c))
+        except Exception:
+            pass
+    if temps:
+        trend["avg_temp"] = round(sum(temps) / len(temps), 1)
+
     open_issues = (
         SwimmerIssue.query.filter_by(beach_id=beach_id, resolved=False)
         .order_by(SwimmerIssue.submitted_at.desc())
@@ -790,6 +936,7 @@ def beach_detail(beach_id):
         reports=recent_reports,
         issues=open_issues,
         photos=photos,
+        trend=trend,  # ✅ NEW
         role=current_user_role(),
         username=session.get("username")
     )
@@ -895,7 +1042,7 @@ def remove_favourite(beach_id):
 
 
 # ================================
-# --- SwimSafe: SESSION PLANNER ROUTES (NEW) ---
+# --- SwimSafe: SESSION PLANNER ROUTES (UPDATED) ---
 # ================================
 @app.route("/swimmer/sessions", methods=["GET"])
 def swimmer_sessions():
@@ -910,7 +1057,7 @@ def swimmer_sessions():
 
     now = datetime.utcnow()
 
-    # ✅ UPDATED: joinedload() prevents extra queries when template accesses s.beach.*
+    # ✅ joinedload() prevents extra queries when template accesses s.beach.*
     upcoming = (
         SwimSessionPlan.query
         .options(joinedload(SwimSessionPlan.beach))
@@ -928,6 +1075,52 @@ def swimmer_sessions():
         .all()
     )
 
+    # ✅ Training log outcomes for these sessions (NEW)
+    session_ids = [s.id for s in upcoming] + [s.id for s in recent]
+    outcomes = (
+        SwimSessionOutcome.query
+        .filter(SwimSessionOutcome.session_id.in_(session_ids))
+        .all()
+        if session_ids else []
+    )
+    outcome_by_session = {o.session_id: o for o in outcomes}
+
+    # ✅ Session Safety (API) — for upcoming sessions only (NEW)
+    # Light: cap + cache per beach+hour to reduce API calls
+    safety_by_session = {}
+    cache = {}  # (beach_id, hour_key) -> advisory dict
+
+    for s in upcoming[:8]:
+        try:
+            b = s.beach
+            if not b or b.latitude is None or b.longitude is None:
+                safety_by_session[s.id] = None
+                continue
+
+            lat = float(b.latitude)
+            lng = float(b.longitude)
+            hour_key = s.planned_for.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H")
+            key = (s.beach_id, hour_key)
+
+            if key in cache:
+                safety_by_session[s.id] = cache[key]
+                continue
+
+            api_data = get_marine_conditions_at(lat, lng, s.planned_for) or {}
+            tide = compute_tide_assist(lat, lng, marine_data=api_data)
+
+            if tide:
+                api_data["tide_state"] = tide.get("tide_state", "")
+                api_data["tide_strength"] = tide.get("tide_strength", "")
+                api_data["tide_basis"] = tide.get("tide_basis", "")
+
+            advisory = build_safety_advisory(api_data if api_data else None)
+            cache[key] = advisory
+            safety_by_session[s.id] = advisory
+
+        except Exception:
+            safety_by_session[s.id] = None
+
     return render_template(
         "swimmer_sessions.html",
         beaches=beaches_list,
@@ -935,6 +1128,10 @@ def swimmer_sessions():
         recent_sessions=recent,
         role=current_user_role(),
         username=session.get("username"),
+        # ✅ NEW
+        presets=SESSION_PRESETS,
+        safety_by_session=safety_by_session,
+        outcome_by_session=outcome_by_session,
     )
 
 
@@ -957,7 +1154,6 @@ def create_swimmer_session():
 
         beach_id = int(beach_id_raw)
 
-        # Expect HTML datetime-local: "YYYY-MM-DDTHH:MM"
         planned_for = datetime.strptime(planned_for_str, "%Y-%m-%dT%H:%M")
 
         goal = (request.form.get("goal") or "Endurance").strip()
@@ -1011,11 +1207,15 @@ def delete_swimmer_session(session_id):
         return redirect(url_for("login"))
 
     try:
-        # ✅ UPDATED: one safe lookup (prevents deleting others’ sessions)
         s = SwimSessionPlan.query.filter_by(id=session_id, user_id=uid).first()
         if not s:
             flash("Session not found.", "error")
             return redirect(url_for("swimmer_sessions"))
+
+        # ✅ delete related outcome if it exists (keeps DB clean)
+        o = SwimSessionOutcome.query.filter_by(session_id=s.id).first()
+        if o:
+            db.session.delete(o)
 
         db.session.delete(s)
         db.session.commit()
@@ -1023,6 +1223,84 @@ def delete_swimmer_session(session_id):
     except Exception as e:
         db.session.rollback()
         flash(f"Error deleting session: {e}", "error")
+
+    return redirect(url_for("swimmer_sessions"))
+
+
+# ================================
+# --- SwimSafe: TRAINING LOG ACTIONS (NEW) ---
+# ================================
+@app.post("/swimmer/sessions/<int:session_id>/complete")
+def complete_swimmer_session(session_id):
+    if not login_required(role="swimmer"):
+        return redirect(url_for("login"))
+
+    uid = _require_user_id()
+    if uid is None:
+        return redirect(url_for("login"))
+
+    try:
+        s = SwimSessionPlan.query.filter_by(id=session_id, user_id=uid).first()
+        if not s:
+            flash("Session not found.", "error")
+            return redirect(url_for("swimmer_sessions"))
+
+        outcome = SwimSessionOutcome.query.filter_by(session_id=s.id).first()
+        if not outcome:
+            outcome = SwimSessionOutcome(session_id=s.id)
+            db.session.add(outcome)
+
+        outcome.status = "completed"
+        outcome.completed_at = datetime.utcnow()
+
+        rpe_raw = (request.form.get("rpe") or "").strip()
+        dur_raw = (request.form.get("actual_duration_min") or "").strip()
+        dist_raw = (request.form.get("actual_distance_m") or "").strip()
+        notes = (request.form.get("outcome_notes") or "").strip()
+
+        outcome.rpe = int(rpe_raw) if rpe_raw.isdigit() else None
+        outcome.actual_duration_min = int(dur_raw) if dur_raw.isdigit() else None
+        outcome.actual_distance_m = int(dist_raw) if dist_raw.isdigit() else None
+        outcome.outcome_notes = notes if notes else None
+
+        db.session.commit()
+        flash("Session marked as completed.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error updating session outcome: {e}", "error")
+
+    return redirect(url_for("swimmer_sessions"))
+
+
+@app.post("/swimmer/sessions/<int:session_id>/skip")
+def skip_swimmer_session(session_id):
+    if not login_required(role="swimmer"):
+        return redirect(url_for("login"))
+
+    uid = _require_user_id()
+    if uid is None:
+        return redirect(url_for("login"))
+
+    try:
+        s = SwimSessionPlan.query.filter_by(id=session_id, user_id=uid).first()
+        if not s:
+            flash("Session not found.", "error")
+            return redirect(url_for("swimmer_sessions"))
+
+        outcome = SwimSessionOutcome.query.filter_by(session_id=s.id).first()
+        if not outcome:
+            outcome = SwimSessionOutcome(session_id=s.id)
+            db.session.add(outcome)
+
+        outcome.status = "skipped"
+        outcome.completed_at = datetime.utcnow()
+        outcome.outcome_notes = (request.form.get("outcome_notes") or "").strip() or None
+
+        db.session.commit()
+        flash("Session marked as skipped.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error updating session outcome: {e}", "error")
 
     return redirect(url_for("swimmer_sessions"))
 
@@ -1042,7 +1320,6 @@ def swimmer():
 
     reports = report_query.limit(20).all()
 
-    # --- SwimSafe: ADDED for Swimmer Dashboard (safe additions) ---
     latest_report = reports[0] if reports else None
 
     api_data = None
@@ -1050,7 +1327,6 @@ def swimmer():
     advisory = None
     swimmer_tips = []
 
-    # Pick a sensible beach for API/tips (filtered beach if selected, else most recent report beach)
     primary_beach = _pick_primary_beach_for_swimmer(beach_id, reports, beaches_list)
 
     if primary_beach and primary_beach.latitude is not None and primary_beach.longitude is not None:
@@ -1072,20 +1348,17 @@ def swimmer():
             advisory = build_safety_advisory(api_data if api_data else None)
             swimmer_tips = _swimmer_context_tips(latest_report, advisory, tide)
         except Exception:
-            # Fail silently (dashboard still renders with DB data)
             api_data = None
             tide = None
             advisory = None
             swimmer_tips = []
 
-    # KPI bundle (safe to use in template)
     kpis = {
         "report_count": len(reports),
         "beach_count": len(beaches_list),
         "latest_report_time": latest_report.reported_at.strftime("%Y-%m-%d %H:%M") if latest_report else "—",
     }
 
-    # --- SwimSafe: FAVOURITES (NEW, safe additions) ---
     uid = session.get("user_id")
     favourites = []
     favourite_beach_ids = set()
@@ -1100,7 +1373,6 @@ def swimmer():
         )
         favourite_beach_ids = {f.beach_id for f in favourites}
 
-    # ✅ OPTION A (NEW): Upcoming sessions count for dashboard badge
     now = datetime.utcnow()
     upcoming_count = (
         SwimSessionPlan.query
@@ -1115,7 +1387,6 @@ def swimmer():
         reports=reports,
         role=current_user_role(),
         selected_beach_id=beach_id,
-        # --- SwimSafe: ADDED for Swimmer Dashboard (safe additions) ---
         latest_report=latest_report,
         api_data=api_data,
         tide=tide,
@@ -1124,10 +1395,8 @@ def swimmer():
         kpis=kpis,
         username=session.get("username"),
         primary_beach=primary_beach,
-        # --- SwimSafe: FAVOURITES (NEW) ---
         favourites=favourites,
         favourite_beach_ids=favourite_beach_ids,
-        # ✅ OPTION A (NEW)
         upcoming_count=upcoming_count,
     )
 
@@ -1203,7 +1472,6 @@ def create_report():
             else:
                 notes = advisory_text
 
-        # ✅ NEW: also store tide strength into the report (Option A)
         tide_strength = (request.form.get("tide_strength") or "").strip()
         if tide_strength:
             tide_text = f"[TIDE STRENGTH: {tide_strength}]"
