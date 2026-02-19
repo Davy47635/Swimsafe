@@ -12,6 +12,9 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 
+# ✅ NEW: for eager loading (prevents N+1 queries in templates)
+from sqlalchemy.orm import joinedload
+
 # ================================
 # FLASK APP SETUP
 # ================================
@@ -192,6 +195,15 @@ def login_required(role=None):
     if role is None:
         return True
     return r == role
+
+
+def _require_user_id() -> Optional[int]:
+    """✅ Common guard used in multiple routes."""
+    uid = session.get("user_id")
+    if not uid:
+        flash("Please log in again.", "error")
+        return None
+    return uid
 
 
 def _safe_hour_value(hour: dict, key: str):
@@ -837,12 +849,11 @@ def add_favourite(beach_id):
     if not login_required(role="swimmer"):
         return redirect(url_for("login"))
 
-    try:
-        uid = session.get("user_id")
-        if not uid:
-            flash("Please log in again.", "error")
-            return redirect(url_for("login"))
+    uid = _require_user_id()
+    if uid is None:
+        return redirect(url_for("login"))
 
+    try:
         existing = FavoriteBeach.query.filter_by(user_id=uid, beach_id=beach_id).first()
         if existing:
             flash("Beach already in favourites.", "success")
@@ -864,12 +875,11 @@ def remove_favourite(beach_id):
     if not login_required(role="swimmer"):
         return redirect(url_for("login"))
 
-    try:
-        uid = session.get("user_id")
-        if not uid:
-            flash("Please log in again.", "error")
-            return redirect(url_for("login"))
+    uid = _require_user_id()
+    if uid is None:
+        return redirect(url_for("login"))
 
+    try:
         fav = FavoriteBeach.query.filter_by(user_id=uid, beach_id=beach_id).first()
         if fav:
             db.session.delete(fav)
@@ -892,16 +902,18 @@ def swimmer_sessions():
     if not login_required(role="swimmer"):
         return redirect(url_for("login"))
 
-    uid = session.get("user_id")
-    if not uid:
-        flash("Please log in again.", "error")
+    uid = _require_user_id()
+    if uid is None:
         return redirect(url_for("login"))
 
     beaches_list = Beach.query.order_by(Beach.name.asc()).all()
 
     now = datetime.utcnow()
+
+    # ✅ UPDATED: joinedload() prevents extra queries when template accesses s.beach.*
     upcoming = (
         SwimSessionPlan.query
+        .options(joinedload(SwimSessionPlan.beach))
         .filter(SwimSessionPlan.user_id == uid, SwimSessionPlan.planned_for >= now)
         .order_by(SwimSessionPlan.planned_for.asc())
         .limit(20)
@@ -909,6 +921,7 @@ def swimmer_sessions():
     )
     recent = (
         SwimSessionPlan.query
+        .options(joinedload(SwimSessionPlan.beach))
         .filter(SwimSessionPlan.user_id == uid, SwimSessionPlan.planned_for < now)
         .order_by(SwimSessionPlan.planned_for.desc())
         .limit(10)
@@ -930,18 +943,19 @@ def create_swimmer_session():
     if not login_required(role="swimmer"):
         return redirect(url_for("login"))
 
-    uid = session.get("user_id")
-    if not uid:
-        flash("Please log in again.", "error")
+    uid = _require_user_id()
+    if uid is None:
         return redirect(url_for("login"))
 
     try:
-        beach_id = int(request.form.get("beach_id", "0"))
+        beach_id_raw = (request.form.get("beach_id") or "").strip()
         planned_for_str = (request.form.get("planned_for") or "").strip()
 
-        if not beach_id or not planned_for_str:
+        if not beach_id_raw.isdigit() or not planned_for_str:
             flash("Please select a beach and date/time.", "error")
             return redirect(url_for("swimmer_sessions"))
+
+        beach_id = int(beach_id_raw)
 
         # Expect HTML datetime-local: "YYYY-MM-DDTHH:MM"
         planned_for = datetime.strptime(planned_for_str, "%Y-%m-%dT%H:%M")
@@ -957,12 +971,10 @@ def create_swimmer_session():
         duration_min = int(duration_min_raw) if duration_min_raw.isdigit() else None
         distance_m = int(distance_m_raw) if distance_m_raw.isdigit() else None
 
-        # Basic sanity: must set at least duration or distance (optional but recommended)
         if duration_min is None and distance_m is None:
             flash("Add at least a duration (min) or distance (m) for the session.", "error")
             return redirect(url_for("swimmer_sessions"))
 
-        # Validate beach exists
         b = Beach.query.get(beach_id)
         if not b:
             flash("Selected beach not found.", "error")
@@ -994,14 +1006,14 @@ def delete_swimmer_session(session_id):
     if not login_required(role="swimmer"):
         return redirect(url_for("login"))
 
-    uid = session.get("user_id")
-    if not uid:
-        flash("Please log in again.", "error")
+    uid = _require_user_id()
+    if uid is None:
         return redirect(url_for("login"))
 
     try:
-        s = SwimSessionPlan.query.get(session_id)
-        if not s or s.user_id != uid:
+        # ✅ UPDATED: one safe lookup (prevents deleting others’ sessions)
+        s = SwimSessionPlan.query.filter_by(id=session_id, user_id=uid).first()
+        if not s:
             flash("Session not found.", "error")
             return redirect(url_for("swimmer_sessions"))
 
@@ -1088,6 +1100,15 @@ def swimmer():
         )
         favourite_beach_ids = {f.beach_id for f in favourites}
 
+    # ✅ OPTION A (NEW): Upcoming sessions count for dashboard badge
+    now = datetime.utcnow()
+    upcoming_count = (
+        SwimSessionPlan.query
+        .filter(SwimSessionPlan.user_id == uid, SwimSessionPlan.planned_for >= now)
+        .count()
+        if uid else 0
+    )
+
     return render_template(
         "swimmer.html",
         beaches=beaches_list,
@@ -1106,6 +1127,8 @@ def swimmer():
         # --- SwimSafe: FAVOURITES (NEW) ---
         favourites=favourites,
         favourite_beach_ids=favourite_beach_ids,
+        # ✅ OPTION A (NEW)
+        upcoming_count=upcoming_count,
     )
 
 
@@ -1315,5 +1338,8 @@ with app.app_context():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+
 
 
