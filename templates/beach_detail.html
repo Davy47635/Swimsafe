@@ -420,6 +420,7 @@
     @media(min-width: 1100px){
       .photos{ grid-template-columns: repeat(4, 1fr); }
     }
+
     .photo{
       border-radius: var(--radiusSm);
       overflow:hidden;
@@ -427,6 +428,10 @@
       background: rgba(0,0,0,0.20);
       box-shadow: var(--shadowSm);
       transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+
+      /* ✅ ensure the media + caption lay out correctly */
+      display: flex;
+      flex-direction: column;
     }
     .photo:hover{
       transform: translateY(-2px);
@@ -434,16 +439,23 @@
       box-shadow: 0 18px 40px rgba(0,0,0,0.35);
     }
 
-    /* ✅ FIX: give thumbnails a stable height so they never "render blank" */
-    .photo img{
+    /* ✅ reliable thumbnail box */
+    .photoMedia{
       width: 100%;
-      height: 160px;           /* stable box => always visible */
-      display: block;
-      object-fit: cover;       /* nice thumbnail crop */
+      height: 160px;
       background: rgba(255,255,255,0.04);
+      overflow: hidden;
+      flex: 0 0 auto;
     }
     @media(max-width: 520px){
-      .photo img{ height: 150px; }
+      .photoMedia{ height: 150px; }
+    }
+
+    .photoMedia img{
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
     }
 
     .cap{
@@ -818,9 +830,12 @@
           <div class="photos" aria-label="Photo gallery">
             {% for p in pics %}
               <figure class="photo">
-                {% if p.image_url %}
-                  <img src="{{ p.image_url }}" alt="Beach photo" loading="lazy">
-                {% endif %}
+                <div class="photoMedia">
+                  {% if p.image_url %}
+                    <img src="{{ p.image_url }}" alt="Beach photo" loading="lazy">
+                  {% endif %}
+                </div>
+
                 <figcaption class="cap">
                   <div><b>Beach photo</b></div>
                   <div>
@@ -870,7 +885,6 @@
       const f = norm(filter.value);
 
       rows.forEach(row => {
-        // skip "No reports yet" row
         if(!row.getAttribute("data-flag")){
           row.style.display = (q || f) ? "none" : "";
           return;
