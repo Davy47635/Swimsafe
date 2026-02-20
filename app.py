@@ -1046,6 +1046,18 @@ def add_favourite(beach_id):
 
     return redirect(url_for("swimmer"))
 
+@app.get("/admin/reset-beach-photos")
+def admin_reset_beach_photos():
+    # TEMP: remove after running once
+    if not login_required(role="lifeguard"):
+        return redirect(url_for("login"))
+
+    try:
+        BeachPhoto.__table__.drop(db.engine, checkfirst=True)
+        db.create_all()
+        return "✅ beach_photos dropped + recreated"
+    except Exception as e:
+        return f"❌ error: {e}", 500
 
 @app.post("/favourite/<int:beach_id>/remove")
 def remove_favourite(beach_id):
