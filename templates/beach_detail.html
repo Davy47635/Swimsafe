@@ -812,7 +812,7 @@
           <div class="photos" aria-label="Photo gallery">
             {% for p in pics %}
               <figure class="photo">
-                <img src="{{ url_for('static', filename='uploads/' ~ p.filename) }}" alt="Beach photo">
+                <img src="{{ p.image_url }}" alt="Beach photo">
                 <figcaption class="cap">
                   <div><b>Beach photo</b></div>
                   <div>
