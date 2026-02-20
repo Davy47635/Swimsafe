@@ -16,6 +16,26 @@ from werkzeug.utils import secure_filename
 from sqlalchemy.orm import joinedload
 
 # ================================
+# ✅ NEW: CLOUDINARY (Production Image Storage)
+# ================================
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME", "").strip()
+CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY", "").strip()
+CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET", "").strip()
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_CLOUD_NAME,
+    api_key=CLOUDINARY_API_KEY,
+    api_secret=CLOUDINARY_API_SECRET,
+    secure=True
+)
+
+print("Cloudinary configured:", bool(CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET))
+
+# ================================
 # FLASK APP SETUP
 # ================================
 
@@ -245,7 +265,12 @@ class BeachPhoto(db.Model):
     __tablename__ = "beach_photos"
     id = db.Column(db.Integer, primary_key=True)
     beach_id = db.Column(db.Integer, db.ForeignKey("beaches.id"), nullable=False)
-    filename = db.Column(db.String(255), nullable=False)
+
+    # ✅ NEW: Cloudinary storage fields
+    image_url = db.Column(db.String(500), nullable=False)
+    public_id = db.Column(db.String(255))
+
+    # (keep these)
     uploaded_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     uploaded_by = db.Column(db.String(100))
 
@@ -958,29 +983,34 @@ def upload_beach_photo(beach_id):
 
     beach = Beach.query.get_or_404(beach_id)
 
-    f = request.files.get("photo")
-    if not f or not f.filename:
+    file = request.files.get("photo")
+    if not file or not file.filename:
         flash("No file selected.", "error")
         return redirect(url_for("beach_detail", beach_id=beach.id))
 
-    if not allowed_file(f.filename):
+    if not allowed_file(file.filename):
         flash("Invalid file type. Use png/jpg/jpeg.", "error")
         return redirect(url_for("beach_detail", beach_id=beach.id))
 
     try:
-        original = secure_filename(f.filename)
-        unique_name = f"{beach.id}_{int(datetime.utcnow().timestamp())}_{original}"
-        save_path = os.path.join(app.config["UPLOAD_FOLDER"], unique_name)
-        f.save(save_path)
+        # ✅ Upload to Cloudinary (production storage)
+        result = cloudinary.uploader.upload(
+            file,
+            folder=f"swimsafe/beaches/{beach.id}",
+            resource_type="image"
+        )
 
         p = BeachPhoto(
             beach_id=beach.id,
-            filename=unique_name,
+            image_url=result["secure_url"],
+            public_id=result.get("public_id"),
             uploaded_by=session.get("username")
         )
+
         db.session.add(p)
         db.session.commit()
         flash("Photo uploaded.", "success")
+
     except Exception as e:
         db.session.rollback()
         flash(f"Error uploading photo: {e}", "error")
