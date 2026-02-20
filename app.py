@@ -68,7 +68,22 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 print("DB URI =", app.config["SQLALCHEMY_DATABASE_URI"])
 
 db = SQLAlchemy(app)
+db = SQLAlchemy(app)
 
+# -----------------------------
+# TEMP DEBUG: inspect DB schema
+# -----------------------------
+from sqlalchemy import inspect
+
+with app.app_context():
+    inspector = inspect(db.engine)
+    if "beach_photos" in inspector.get_table_names():
+        print("beach_photos columns:")
+        for col in inspector.get_columns("beach_photos"):
+            print("-", col["name"])
+    else:
+        print("beach_photos table NOT found")
+# -----------------------------
 # ================================
 # STORMGLASS API
 # ================================
