@@ -433,13 +433,19 @@
       border-color: rgba(255,255,255,0.18);
       box-shadow: 0 18px 40px rgba(0,0,0,0.35);
     }
-    .photo img {
-  width: 100%;
-  height: auto;          /* ✅ key fix */
-  display: block;
-  object-fit: contain;  /* ✅ key fix */
-  background: rgba(255,255,255,0.04);
-}
+
+    /* ✅ FIX: give thumbnails a stable height so they never "render blank" */
+    .photo img{
+      width: 100%;
+      height: 160px;           /* stable box => always visible */
+      display: block;
+      object-fit: cover;       /* nice thumbnail crop */
+      background: rgba(255,255,255,0.04);
+    }
+    @media(max-width: 520px){
+      .photo img{ height: 150px; }
+    }
+
     .cap{
       padding: 10px;
       color: var(--muted);
@@ -812,7 +818,9 @@
           <div class="photos" aria-label="Photo gallery">
             {% for p in pics %}
               <figure class="photo">
-                <img src="{{ p.image_url or '' }}" alt="Beach photo">
+                {% if p.image_url %}
+                  <img src="{{ p.image_url }}" alt="Beach photo" loading="lazy">
+                {% endif %}
                 <figcaption class="cap">
                   <div><b>Beach photo</b></div>
                   <div>
