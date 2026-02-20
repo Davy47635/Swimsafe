@@ -410,12 +410,20 @@
     /* Photos */
     .photos{
       margin-top: 10px;
-      display: grid;
+      display:grid;
       gap: 12px;
+      grid-template-columns: repeat(2, 1fr);
+    }
+    @media(min-width: 740px){
+      .photos{ grid-template-columns: repeat(3, 1fr); }
+    }
+    @media(min-width: 1100px){
+      .photos{ grid-template-columns: repeat(4, 1fr); }
+    }
 
-      /* ✅ FIX: more robust than hard 2/3/4 breakpoints */
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      align-items: start; /* ✅ FIX: prevents stretch/collapse weirdness */
+    /* ✅ NEW: Force 2 columns inside the right panel on desktop (prevents skinny 1-col stack) */
+    @media (min-width: 1020px){
+      .photos{ grid-template-columns: repeat(2, 1fr); }
     }
 
     .photo{
@@ -429,7 +437,6 @@
       /* ✅ ensure the media + caption lay out correctly */
       display: flex;
       flex-direction: column;
-      min-width: 0;
     }
     .photo:hover{
       transform: translateY(-2px);
@@ -437,13 +444,16 @@
       box-shadow: 0 18px 40px rgba(0,0,0,0.35);
     }
 
-    /* ✅ FIX: aspect-ratio instead of fixed height (works on ALL screen widths) */
+    /* ✅ reliable thumbnail box */
     .photoMedia{
       width: 100%;
-      aspect-ratio: 4 / 3;     /* key */
+      height: 160px;
       background: rgba(255,255,255,0.04);
       overflow: hidden;
       flex: 0 0 auto;
+    }
+    @media(max-width: 520px){
+      .photoMedia{ height: 150px; }
     }
 
     .photoMedia img{
@@ -499,9 +509,6 @@
       table{ min-width: 520px; }
       .input{ min-width: 100%; }
       .select{ min-width: 100%; }
-
-      /* optional: slightly smaller min width on very small screens */
-      .photos{ grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
     }
 
     /* ✅ Minimal form styling (only for upload block) */
