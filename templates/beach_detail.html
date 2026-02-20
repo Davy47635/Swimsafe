@@ -407,23 +407,13 @@
     }
     .mono{ font-family: var(--mono); font-size: 12px; color: rgba(231,238,251,0.82); }
 
-    /* Photos */
+    /* Photos (FIXED: normal on laptop + mobile) */
     .photos{
       margin-top: 10px;
       display:grid;
       gap: 12px;
-      grid-template-columns: repeat(2, 1fr);
-    }
-    @media(min-width: 740px){
-      .photos{ grid-template-columns: repeat(3, 1fr); }
-    }
-    @media(min-width: 1100px){
-      .photos{ grid-template-columns: repeat(4, 1fr); }
-    }
-
-    /* ✅ NEW: Force 2 columns inside the right panel on desktop (prevents skinny 1-col stack) */
-    @media (min-width: 1020px){
-      .photos{ grid-template-columns: repeat(2, 1fr); }
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      align-items: start;
     }
 
     .photo{
@@ -433,8 +423,6 @@
       background: rgba(0,0,0,0.20);
       box-shadow: var(--shadowSm);
       transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-
-      /* ✅ ensure the media + caption lay out correctly */
       display: flex;
       flex-direction: column;
     }
@@ -444,16 +432,14 @@
       box-shadow: 0 18px 40px rgba(0,0,0,0.35);
     }
 
-    /* ✅ reliable thumbnail box */
+    /* FIXED: aspect ratio instead of fixed height */
     .photoMedia{
       width: 100%;
-      height: 160px;
+      aspect-ratio: 4 / 3;
       background: rgba(255,255,255,0.04);
       overflow: hidden;
       flex: 0 0 auto;
-    }
-    @media(max-width: 520px){
-      .photoMedia{ height: 150px; }
+      position: relative; /* needed for delete button overlay */
     }
 
     .photoMedia img{
@@ -471,6 +457,33 @@
       font-weight: 650;
     }
     .cap b{ color: rgba(231,238,251,0.90); }
+
+    /* Delete overlay (lifeguards only) */
+    .delForm{
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      margin: 0;
+    }
+    .delBtn{
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(239,68,68,0.24);
+      color: rgba(231,238,251,0.96);
+      font-weight: 900;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.25);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .delBtn:hover{
+      background: rgba(239,68,68,0.34);
+      border-color: rgba(255,255,255,0.22);
+    }
 
     /* View-only filters */
     .filters{
@@ -838,6 +851,15 @@
                 <div class="photoMedia">
                   {% if p.image_url %}
                     <img src="{{ p.image_url }}" alt="Beach photo" loading="lazy">
+                  {% endif %}
+
+                  {% if role == "lifeguard" %}
+                    <form method="post"
+                          action="{{ url_for('delete_beach_photo', photo_id=p.id) }}"
+                          class="delForm"
+                          onsubmit="return confirm('Delete this photo? This cannot be undone.');">
+                      <button type="submit" class="delBtn" title="Delete photo">✕</button>
+                    </form>
                   {% endif %}
                 </div>
 

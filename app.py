@@ -1016,6 +1016,34 @@ def add_favourite(beach_id):
 
     return redirect(url_for("swimmer"))
 
+# ---- Lifeguard deletes a beach photo ----
+@app.post("/photos/<int:photo_id>/delete")
+def delete_beach_photo(photo_id):
+    if not login_required(role="lifeguard"):
+        return redirect(url_for("login"))
+
+    try:
+        photo = BeachPhoto.query.get(photo_id)
+        if not photo:
+            flash("Photo not found.", "error")
+            return redirect(url_for("beaches"))
+
+        beach_id = photo.beach_id
+
+        # Remove from Cloudinary if stored there
+        if CLOUDINARY_ENABLED and photo.public_id:
+            cloudinary.uploader.destroy(photo.public_id, resource_type="image")
+
+        db.session.delete(photo)
+        db.session.commit()
+        flash("Photo deleted.", "success")
+
+        return redirect(url_for("beach_detail", beach_id=beach_id))
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error deleting photo: {e}", "error")
+        return redirect(url_for("beaches"))
 
 @app.get("/admin/reset-beach-photos")
 def admin_reset_beach_photos():
