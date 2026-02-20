@@ -487,6 +487,27 @@
       .input{ min-width: 100%; }
       .select{ min-width: 100%; }
     }
+
+    /* ✅ Minimal form styling (only for upload block) */
+    .uploadRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+      margin-top: 10px;
+    }
+    .btn{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(46,124,246,0.22);
+      color: var(--text);
+      padding: 11px 14px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .btn:hover{
+      background: rgba(46,124,246,0.30);
+    }
   </style>
 </head>
 
@@ -770,19 +791,38 @@
           <span class="countBadge">{{ photos_count }} uploaded</span>
         </div>
 
+        {# ✅ Upload form (lifeguards only) #}
+        {% if role == "lifeguard" %}
+          <form method="post"
+                action="{{ url_for('upload_beach_photo', beach_id=beach.id) }}"
+                enctype="multipart/form-data"
+                class="uploadRow">
+            <input class="input"
+                   type="file"
+                   name="photo"
+                   accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                   required>
+            <button class="btn" type="submit">Upload photo</button>
+          </form>
+          <div class="note">PNG/JPG/JPEG only. Stored under <span class="mono">static/uploads</span>.</div>
+        {% endif %}
+
         {% set pics = photos|default([]) %}
         {% if pics and pics|length > 0 %}
           <div class="photos" aria-label="Photo gallery">
             {% for p in pics %}
               <figure class="photo">
-                <img src="{{ url_for('static', filename=p.file_path) }}" alt="Beach photo">
+                <img src="{{ url_for('static', filename='uploads/' ~ p.filename) }}" alt="Beach photo">
                 <figcaption class="cap">
-                  <div><b>{{ p.caption if p.caption else "Beach photo" }}</b></div>
+                  <div><b>Beach photo</b></div>
                   <div>
                     {% if p.uploaded_at %}
                       Uploaded <span class="mono">{{ p.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</span>
                     {% else %}
                       Uploaded
+                    {% endif %}
+                    {% if p.uploaded_by %}
+                      <span class="mono"> • by {{ p.uploaded_by }}</span>
                     {% endif %}
                   </div>
                 </figcaption>
@@ -794,7 +834,7 @@
             <div class="ico" aria-hidden="true">📷</div>
             <div>
               <p>No photos yet.</p>
-              <div class="hint">Photos are added by lifeguards when available (via Lifeguard tools).</div>
+              <div class="hint">Photos are added by lifeguards when available.</div>
             </div>
           </div>
         {% endif %}
@@ -842,4 +882,3 @@
 
 </body>
 </html>
-
