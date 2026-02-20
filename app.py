@@ -22,14 +22,19 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
-# ✅ Use CLOUDINARY_URL (recommended on Render)
-# Example: cloudinary://API_KEY:API_SECRET@CLOUD_NAME
-CLOUDINARY_URL = os.getenv("CLOUDINARY_URL", "").strip()
+import os
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
-# Cloudinary SDK auto-reads CLOUDINARY_URL if it's set
-cloudinary.config(secure=True)
+CLOUDINARY_URL = (os.getenv("CLOUDINARY_URL") or "").strip()
 
-CLOUDINARY_ENABLED = bool(CLOUDINARY_URL)
+if CLOUDINARY_URL:
+    cloudinary.config(cloudinary_url=CLOUDINARY_URL, secure=True)
+    CLOUDINARY_ENABLED = True
+else:
+    CLOUDINARY_ENABLED = False
+
 print("Cloudinary configured:", CLOUDINARY_ENABLED)
 # ================================
 # FLASK APP SETUP
