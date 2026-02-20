@@ -804,7 +804,7 @@
                    required>
             <button class="btn" type="submit">Upload photo</button>
           </form>
-          <div class="note">PNG/JPG/JPEG only. Stored under <span class="mono">static/uploads</span>.</div>
+          <div class="note">PNG/JPG/JPEG only. Stored securely in Cloudinary.</div>
         {% endif %}
 
         {% set pics = photos|default([]) %}
@@ -812,7 +812,7 @@
           <div class="photos" aria-label="Photo gallery">
             {% for p in pics %}
               <figure class="photo">
-                <img src="{{ p.image_url }}" alt="Beach photo">
+                <img src="{{ p.image_url or '' }}" alt="Beach photo">
                 <figcaption class="cap">
                   <div><b>Beach photo</b></div>
                   <div>

@@ -27,11 +27,17 @@ CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY", "").strip()
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET", "").strip()
 
 cloudinary.config(
-    cloud_name=CLOUDINARY_CLOUD_NAME,
-    api_key=CLOUDINARY_API_KEY,
-    api_secret=CLOUDINARY_API_SECRET,
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
     secure=True
 )
+CLOUDINARY_ENABLED = all([
+    os.getenv("CLOUDINARY_CLOUD_NAME"),
+    os.getenv("CLOUDINARY_API_KEY"),
+    os.getenv("CLOUDINARY_API_SECRET"),
+])
+print("Cloudinary configured:", CLOUDINARY_ENABLED)
 
 print("Cloudinary configured:", bool(CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET))
 
@@ -266,11 +272,9 @@ class BeachPhoto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     beach_id = db.Column(db.Integer, db.ForeignKey("beaches.id"), nullable=False)
 
-    # ✅ NEW: Cloudinary storage fields
-    image_url = db.Column(db.String(500), nullable=False)
-    public_id = db.Column(db.String(255))
+    image_url = db.Column(db.String(500), nullable=False)   # Cloudinary secure_url
+    public_id = db.Column(db.String(255), nullable=True)    # Cloudinary public_id (optional)
 
-    # (keep these)
     uploaded_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     uploaded_by = db.Column(db.String(100))
 
@@ -983,30 +987,32 @@ def upload_beach_photo(beach_id):
 
     beach = Beach.query.get_or_404(beach_id)
 
-    file = request.files.get("photo")
-    if not file or not file.filename:
+    f = request.files.get("photo")
+    if not f or not f.filename:
         flash("No file selected.", "error")
         return redirect(url_for("beach_detail", beach_id=beach.id))
 
-    if not allowed_file(file.filename):
+    if not allowed_file(f.filename):
         flash("Invalid file type. Use png/jpg/jpeg.", "error")
         return redirect(url_for("beach_detail", beach_id=beach.id))
 
+    if not CLOUDINARY_ENABLED:
+        flash("Cloudinary is not configured on Render (missing env vars).", "error")
+        return redirect(url_for("beach_detail", beach_id=beach.id))
+
     try:
-        # ✅ Upload to Cloudinary (production storage)
-        result = cloudinary.uploader.upload(
-            file,
+        res = cloudinary.uploader.upload(
+            f,
             folder=f"swimsafe/beaches/{beach.id}",
             resource_type="image"
         )
 
         p = BeachPhoto(
             beach_id=beach.id,
-            image_url=result["secure_url"],
-            public_id=result.get("public_id"),
-            uploaded_by=session.get("username")
+            image_url=res.get("secure_url"),
+            public_id=res.get("public_id"),
+            uploaded_by=session.get("username"),
         )
-
         db.session.add(p)
         db.session.commit()
         flash("Photo uploaded.", "success")
