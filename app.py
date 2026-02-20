@@ -10,32 +10,32 @@ from typing import Optional, Dict, Any  # ✅ Python 3.9-compatible typing
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename  # (safe to keep even if unused)
 
 # ✅ NEW: for eager loading (prevents N+1 queries in templates)
 from sqlalchemy.orm import joinedload
 
 # ================================
-# ✅ NEW: CLOUDINARY (Production Image Storage)
+# ✅ CLOUDINARY (Production Image Storage)
 # ================================
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-
-import os
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
 CLOUDINARY_URL = (os.getenv("CLOUDINARY_URL") or "").strip()
 
+# Robust config: Cloudinary SDK will also read CLOUDINARY_URL from env automatically,
+# but we explicitly configure to be clear.
 if CLOUDINARY_URL:
-    cloudinary.config(cloudinary_url=CLOUDINARY_URL, secure=True)
+    # Set it explicitly (helps if some environments behave oddly)
+    os.environ["CLOUDINARY_URL"] = CLOUDINARY_URL
+    cloudinary.config(secure=True)
     CLOUDINARY_ENABLED = True
 else:
     CLOUDINARY_ENABLED = False
 
 print("Cloudinary configured:", CLOUDINARY_ENABLED)
+
 # ================================
 # FLASK APP SETUP
 # ================================
@@ -62,28 +62,16 @@ else:
     DB_HOST = "127.0.0.1"
     DB_PORT = "5432"
     DB_NAME = "swimsafe"
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    app.config["SQLALCHEMY_DATABASE_URI"] = (
+        f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    )
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 print("DB URI =", app.config["SQLALCHEMY_DATABASE_URI"])
 
-db = SQLAlchemy(app)
+# ✅ IMPORTANT FIX: only initialise SQLAlchemy ONCE
 db = SQLAlchemy(app)
 
-# -----------------------------
-# TEMP DEBUG: inspect DB schema
-# -----------------------------
-from sqlalchemy import inspect
-
-with app.app_context():
-    inspector = inspect(db.engine)
-    if "beach_photos" in inspector.get_table_names():
-        print("beach_photos columns:")
-        for col in inspector.get_columns("beach_photos"):
-            print("-", col["name"])
-    else:
-        print("beach_photos table NOT found")
-# -----------------------------
 # ================================
 # STORMGLASS API
 # ================================
@@ -100,6 +88,7 @@ STORMGLASS_TIDE_EXTREMES_ENDPOINT = "https://api.stormglass.io/v2/tide/extremes/
 
 # ================================
 # UPLOADS (Beach photos)
+# (You are using Cloudinary for storage, but keeping this is fine for any legacy routes)
 # ================================
 
 UPLOAD_FOLDER = os.path.join(app.root_path, "static", "uploads")
@@ -232,15 +221,13 @@ class SwimSessionPlan(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     beach_id = db.Column(db.Integer, db.ForeignKey("beaches.id"), nullable=False)
 
-    # When the swimmer plans to swim (stored as UTC or naive datetime like your reports)
     planned_for = db.Column(db.DateTime, nullable=False)
 
-    # Training details
-    goal = db.Column(db.String(80), nullable=False, default="Endurance")  # Endurance/Speed/Technique/Acclimation/Race-pace
-    duration_min = db.Column(db.Integer)  # optional
-    distance_m = db.Column(db.Integer)    # optional
-    intensity = db.Column(db.String(30), default="Easy")  # Easy/Moderate/Hard
-    skill_level = db.Column(db.String(30), default="Intermediate")  # Beginner/Intermediate/Advanced
+    goal = db.Column(db.String(80), nullable=False, default="Endurance")
+    duration_min = db.Column(db.Integer)
+    distance_m = db.Column(db.Integer)
+    intensity = db.Column(db.String(30), default="Easy")
+    skill_level = db.Column(db.String(30), default="Intermediate")
 
     notes = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -262,10 +249,8 @@ class SwimSessionOutcome(db.Model):
 
     session_id = db.Column(db.Integer, db.ForeignKey("swim_session_plans.id"), nullable=False, unique=True)
 
-    # planned / completed / skipped
     status = db.Column(db.String(20), nullable=False, default="planned")
 
-    # optional “how it went”
     rpe = db.Column(db.Integer)  # 1–10
     actual_duration_min = db.Column(db.Integer)
     actual_distance_m = db.Column(db.Integer)
@@ -306,7 +291,6 @@ def login_required(role=None):
 
 
 def _require_user_id() -> Optional[int]:
-    """✅ Common guard used in multiple routes."""
     uid = session.get("user_id")
     if not uid:
         flash("Please log in again.", "error")
@@ -315,21 +299,12 @@ def _require_user_id() -> Optional[int]:
 
 
 def _safe_hour_value(hour: dict, key: str):
-    """
-    Stormglass v2 returns values as objects keyed by source
-    (e.g. metno, ecmwf, noaa, sg)
-    Prefer 'sg' → fallback to first available source
-    """
     try:
         data = hour.get(key)
         if not isinstance(data, dict):
             return None
-
-        # Prefer Stormglass source if available
         if "sg" in data:
             return data["sg"]
-
-        # Otherwise take the first available value
         return next(iter(data.values()), None)
     except Exception:
         return None
@@ -340,10 +315,6 @@ def _stormglass_headers():
 
 
 def _utc_hour_str(dt: datetime) -> str:
-    """
-    Stormglass tide endpoints accept start/end like 'YYYY-MM-DDTHH' in UTC.
-    We round down to the hour to keep it simple & predictable.
-    """
     dt2 = dt.replace(minute=0, second=0, microsecond=0)
     return dt2.strftime("%Y-%m-%dT%H")
 
@@ -356,10 +327,6 @@ def _to_float(x):
 
 
 def get_marine_conditions(lat: float, lng: float):
-    """
-    Fetch current-ish marine conditions from Stormglass using lat/lng.
-    Returns a dict or None.
-    """
     if not STORMGLASS_API_KEY:
         return None
 
@@ -425,14 +392,7 @@ def get_marine_conditions(lat: float, lng: float):
         return None
 
 
-# ================================
-# --- SwimSafe: Forecast at planned session time (NEW)
-# ================================
 def get_marine_conditions_at(lat: float, lng: float, when_dt: datetime):
-    """
-    Fetch marine conditions around a planned datetime (UTC/naive).
-    Returns same structure as get_marine_conditions() or None.
-    """
     if not STORMGLASS_API_KEY:
         return None
 
@@ -728,9 +688,6 @@ def build_safety_advisory(api_data: dict):
     }
 
 
-# ================================
-# --- SwimSafe: ADDED for Swimmer Dashboard (safe additions) ---
-# ================================
 def _pick_primary_beach_for_swimmer(beach_id_str: str, reports: list, beaches_list: list):
     try:
         if beach_id_str and beach_id_str.isdigit():
@@ -927,9 +884,6 @@ def beach_detail(beach_id):
         .all()
     )
 
-    # ==========================
-    # Beach trends (last 7 days) from official reports (NEW)
-    # ==========================
     since = datetime.utcnow() - timedelta(days=7)
     week_reports = (
         SeaReport.query
@@ -975,7 +929,7 @@ def beach_detail(beach_id):
         reports=recent_reports,
         issues=open_issues,
         photos=photos,
-        trend=trend,  # ✅ NEW
+        trend=trend,
         role=current_user_role(),
         username=session.get("username")
     )
@@ -1007,7 +961,7 @@ def upload_beach_photo(beach_id):
         return redirect(url_for("beach_detail", beach_id=beach.id))
 
     if not CLOUDINARY_ENABLED:
-        flash("Cloudinary is not configured on Render (missing env vars).", "error")
+        flash("Cloudinary is not configured (CLOUDINARY_URL missing).", "error")
         return redirect(url_for("beach_detail", beach_id=beach.id))
 
     try:
@@ -1062,6 +1016,7 @@ def add_favourite(beach_id):
 
     return redirect(url_for("swimmer"))
 
+
 @app.get("/admin/reset-beach-photos")
 def admin_reset_beach_photos():
     # TEMP: remove after running once
@@ -1074,6 +1029,7 @@ def admin_reset_beach_photos():
         return "✅ beach_photos dropped + recreated"
     except Exception as e:
         return f"❌ error: {e}", 500
+
 
 @app.post("/favourite/<int:beach_id>/remove")
 def remove_favourite(beach_id):
@@ -1115,7 +1071,6 @@ def swimmer_sessions():
 
     now = datetime.utcnow()
 
-    # ✅ joinedload() prevents extra queries when template accesses s.beach.*
     upcoming = (
         SwimSessionPlan.query
         .options(joinedload(SwimSessionPlan.beach))
@@ -1133,7 +1088,6 @@ def swimmer_sessions():
         .all()
     )
 
-    # ✅ Training log outcomes for these sessions (NEW)
     session_ids = [s.id for s in upcoming] + [s.id for s in recent]
     outcomes = (
         SwimSessionOutcome.query
@@ -1143,10 +1097,8 @@ def swimmer_sessions():
     )
     outcome_by_session = {o.session_id: o for o in outcomes}
 
-    # ✅ Session Safety (API) — for upcoming sessions only (NEW)
-    # Light: cap + cache per beach+hour to reduce API calls
     safety_by_session = {}
-    cache = {}  # (beach_id, hour_key) -> advisory dict
+    cache = {}
 
     for s in upcoming[:8]:
         try:
@@ -1186,7 +1138,6 @@ def swimmer_sessions():
         recent_sessions=recent,
         role=current_user_role(),
         username=session.get("username"),
-        # ✅ NEW
         presets=SESSION_PRESETS,
         safety_by_session=safety_by_session,
         outcome_by_session=outcome_by_session,
@@ -1211,7 +1162,6 @@ def create_swimmer_session():
             return redirect(url_for("swimmer_sessions"))
 
         beach_id = int(beach_id_raw)
-
         planned_for = datetime.strptime(planned_for_str, "%Y-%m-%dT%H:%M")
 
         goal = (request.form.get("goal") or "Endurance").strip()
@@ -1270,7 +1220,6 @@ def delete_swimmer_session(session_id):
             flash("Session not found.", "error")
             return redirect(url_for("swimmer_sessions"))
 
-        # ✅ delete related outcome if it exists (keeps DB clean)
         o = SwimSessionOutcome.query.filter_by(session_id=s.id).first()
         if o:
             db.session.delete(o)
@@ -1285,9 +1234,6 @@ def delete_swimmer_session(session_id):
     return redirect(url_for("swimmer_sessions"))
 
 
-# ================================
-# --- SwimSafe: TRAINING LOG ACTIONS (NEW) ---
-# ================================
 @app.post("/swimmer/sessions/<int:session_id>/complete")
 def complete_swimmer_session(session_id):
     if not login_required(role="swimmer"):
@@ -1363,7 +1309,6 @@ def skip_swimmer_session(session_id):
     return redirect(url_for("swimmer_sessions"))
 
 
-# ---- Swimmer page (view/filter reports + submit issues) ----
 @app.route("/swimmer", methods=["GET"])
 def swimmer():
     if not login_required(role="swimmer"):
@@ -1377,7 +1322,6 @@ def swimmer():
         report_query = report_query.filter(SeaReport.beach_id == int(beach_id))
 
     reports = report_query.limit(20).all()
-
     latest_report = reports[0] if reports else None
 
     api_data = None
@@ -1459,7 +1403,6 @@ def swimmer():
     )
 
 
-# ---- Lifeguard dashboard ----
 @app.route("/lifeguard", methods=["GET"])
 def lifeguard():
     if not login_required(role="lifeguard"):
@@ -1506,7 +1449,6 @@ def lifeguard():
     )
 
 
-# ---- Lifeguard: create report ----
 @app.route("/report", methods=["POST"])
 def create_report():
     if not login_required(role="lifeguard"):
@@ -1556,7 +1498,6 @@ def create_report():
     return redirect(url_for("lifeguard"))
 
 
-# ---- Lifeguard: delete report ----
 @app.post("/report/<int:report_id>/delete")
 def delete_report(report_id):
     if not login_required(role="lifeguard"):
@@ -1577,7 +1518,6 @@ def delete_report(report_id):
     return redirect(url_for("lifeguard"))
 
 
-# ---- Lifeguard: edit/update report ----
 @app.route("/report/<int:report_id>/edit", methods=["GET", "POST"])
 def edit_report(report_id):
     if not login_required(role="lifeguard"):
@@ -1612,7 +1552,6 @@ def edit_report(report_id):
     )
 
 
-# ---- Swimmer submits issue ----
 @app.post("/issue")
 def create_issue():
     if not login_required():
@@ -1638,7 +1577,6 @@ def create_issue():
     return redirect(url_for("swimmer"))
 
 
-# ---- Lifeguard resolves issue ----
 @app.post("/issue/<int:issue_id>/resolve")
 def resolve_issue(issue_id):
     if not login_required(role="lifeguard"):
@@ -1664,8 +1602,3 @@ with app.app_context():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
-
-
