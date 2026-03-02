@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SwimSafe — {{ beach.name }} — General Information</title>
+
+  <style>
+    :root{
+      --bg: radial-gradient(1200px 600px at 10% -10%, #0f2a44 0%, #061726 55%, #050f1a 100%);
+      --card: rgba(255,255,255,0.06);
+      --line: rgba(255,255,255,0.14);
+      --text: #f8fafc;
+      --muted: #cbd5e1;
+      --btn: #3b82f6;
+      --btnh: #2563eb;
+      --shadow:
+        0 0 0 1px rgba(255,255,255,0.10),
+        0 18px 40px rgba(0,0,0,0.35);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+
+    .wrap{max-width:1200px;margin:0 auto;padding:28px 18px 60px}
+
+    .header{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:var(--shadow);
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    h1{margin:0;font-size:22px;font-weight:900}
+    .sub{color:var(--muted);font-size:13px;font-weight:650;margin-top:4px}
+
+    .btn{
+      text-decoration:none;
+      background:var(--btn);
+      color:white;
+      font-weight:900;
+      padding:10px 14px;
+      border-radius:12px;
+      transition:.15s ease;
+      display:inline-block;
+    }
+    .btn:hover{background:var(--btnh)}
+    .btn.alt{
+      background:rgba(255,255,255,0.06);
+      border:1px solid var(--line);
+    }
+
+    .grid{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+    @media(max-width:900px){.grid{grid-template-columns:1fr}}
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+
+    h2{margin:0 0 6px;font-size:18px;font-weight:900}
+    .section-sub{margin-bottom:12px;color:var(--muted);font-size:13px;font-weight:650}
+
+    .kv{
+      display:grid;
+      grid-template-columns:160px 1fr;
+      gap:10px 14px;
+      font-size:14px;
+    }
+
+    .k{color:var(--muted);font-weight:900}
+    .v{font-weight:750}
+    .block{white-space:pre-wrap;line-height:1.55}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div>
+      <h1>{{ beach.name }}</h1>
+      <div class="sub">General beach information</div>
+    </div>
+
+    <a class="btn alt" href="{{ url_for('beach_detail', beach_id=beach.id) }}">
+      Back to beach
+    </a>
+  </div>
+
+  <div class="grid">
+
+    <section class="card">
+      <h2>Location</h2>
+      <div class="section-sub">Address and reference links</div>
+
+      <div class="kv">
+        <div class="k">Address</div>
+        <div class="v">
+          {% set parts = [] %}
+          {% if beach.address_line1 %}{% set _ = parts.append(beach.address_line1) %}{% endif %}
+          {% if beach.address_line2 %}{% set _ = parts.append(beach.address_line2) %}{% endif %}
+          {% if beach.town %}{% set _ = parts.append(beach.town) %}{% endif %}
+          {% if beach.county %}{% set _ = parts.append(beach.county) %}{% endif %}
+          {% if beach.postcode %}{% set _ = parts.append(beach.postcode) %}{% endif %}
+          {% if beach.country %}{% set _ = parts.append(beach.country) %}{% endif %}
+          {{ parts | join(", ") if parts else "Information not available." }}
+        </div>
+
+        <div class="k">Maps</div>
+        <div class="v">
+          {% if beach.maps_url %}
+            <a class="btn alt" href="{{ beach.maps_url }}" target="_blank">Open map</a>
+          {% else %}
+            Not available.
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Access & Parking</h2>
+      <div class="section-sub">Getting to the beach</div>
+
+      <div class="kv">
+        <div class="k">Parking</div>
+        <div class="v block">{{ beach.parking_info or "Parking information not available." }}</div>
+
+        <div class="k">Access notes</div>
+        <div class="v block">{{ beach.access_notes or "Access notes not available." }}</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Facilities</h2>
+      <div class="section-sub">Amenities at or near the beach</div>
+      <div class="block">{{ beach.facilities or "Facilities information not available." }}</div>
+    </section>
+
+    <section class="card">
+      <h2>Safety & Emergency Access</h2>
+      <div class="section-sub">Important guidance for swimmers</div>
+
+      <div class="kv">
+        <div class="k">Safety notes</div>
+        <div class="v block">{{ beach.safety_notes or "No safety notes provided." }}</div>
+
+        <div class="k">Emergency access</div>
+        <div class="v block">{{ beach.emergency_access or "Emergency access details not available." }}</div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</body>
+</html>

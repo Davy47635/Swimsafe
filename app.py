@@ -159,6 +159,23 @@ class Beach(db.Model):
     latitude = db.Column(db.Numeric(9, 6))
     longitude = db.Column(db.Numeric(9, 6))
 
+    # ✅ Step 1 upgrade: General beach information (added via SQL migration 001_add_beach_general_info.sql)
+    address_line1 = db.Column(db.String(160))
+    address_line2 = db.Column(db.String(160))
+    town = db.Column(db.String(120))
+    postcode = db.Column(db.String(20))
+    country = db.Column(db.String(60))
+
+    parking_info = db.Column(db.Text)
+    facilities = db.Column(db.Text)
+    access_notes = db.Column(db.Text)
+    safety_notes = db.Column(db.Text)
+    emergency_access = db.Column(db.Text)
+
+    maps_url = db.Column(db.String(500))
+    website_url = db.Column(db.String(500))
+
+
 
 class SeaReport(db.Model):
     __tablename__ = "sea_reports"
@@ -296,6 +313,27 @@ def _require_user_id() -> Optional[int]:
         flash("Please log in again.", "error")
         return None
     return uid
+
+def _clean_text(value: Optional[str], max_len: int) -> Optional[str]:
+    """Trim text and enforce max length. Returns None if blank."""
+    if value is None:
+        return None
+    v = value.strip()
+    if not v:
+        return None
+    if len(v) > max_len:
+        v = v[:max_len]
+    return v
+
+
+def _safe_http_url(value: Optional[str], max_len: int = 500) -> Optional[str]:
+    """Allow only http/https URLs. Returns None if invalid/blank."""
+    v = _clean_text(value, max_len=max_len)
+    if not v:
+        return None
+    if v.startswith("http://") or v.startswith("https://"):
+        return v
+    return None
 
 
 def _safe_hour_value(hour: dict, key: str):
@@ -1335,6 +1373,57 @@ def skip_swimmer_session(session_id):
         flash(f"Error updating session outcome: {e}", "error")
 
     return redirect(url_for("swimmer_sessions"))
+
+
+# ---- Beach general information (NEW) ----
+@app.route("/beach/<int:beach_id>/info", methods=["GET"])
+def beach_info(beach_id):
+    """Logged-in users: full general information for a beach."""
+    if not login_required():
+        return redirect(url_for("login"))
+
+    beach = Beach.query.get_or_404(beach_id)
+    return render_template("beach_info.html", beach=beach, role=current_user_role())
+
+
+@app.route("/lifeguard/beach/<int:beach_id>/edit-info", methods=["GET", "POST"])
+def lifeguard_edit_beach_info(beach_id):
+    """Lifeguard-only: edit general information fields for a beach."""
+    if not login_required("lifeguard"):
+        flash("Lifeguard access required.", "error")
+        return redirect(url_for("login"))
+
+    beach = Beach.query.get_or_404(beach_id)
+
+    if request.method == "POST":
+        # Address
+        beach.address_line1 = _clean_text(request.form.get("address_line1"), 160)
+        beach.address_line2 = _clean_text(request.form.get("address_line2"), 160)
+        beach.town = _clean_text(request.form.get("town"), 120)
+        beach.postcode = _clean_text(request.form.get("postcode"), 20)
+        beach.country = _clean_text(request.form.get("country"), 60)
+
+        # Links (strict: http/https only)
+        beach.maps_url = _safe_http_url(request.form.get("maps_url"), 500)
+        beach.website_url = _safe_http_url(request.form.get("website_url"), 500)
+
+        # Long text
+        beach.parking_info = _clean_text(request.form.get("parking_info"), 5000)
+        beach.facilities = _clean_text(request.form.get("facilities"), 5000)
+        beach.access_notes = _clean_text(request.form.get("access_notes"), 5000)
+        beach.safety_notes = _clean_text(request.form.get("safety_notes"), 5000)
+        beach.emergency_access = _clean_text(request.form.get("emergency_access"), 5000)
+
+        try:
+            db.session.commit()
+            flash("Beach info updated.", "success")
+            return redirect(url_for("beach_info", beach_id=beach.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Could not save changes: {e}", "error")
+
+    return render_template("beach_info_edit.html", beach=beach, role=current_user_role())
+
 
 
 @app.route("/swimmer", methods=["GET"])

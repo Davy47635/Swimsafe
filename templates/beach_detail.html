@@ -287,6 +287,67 @@
       font-weight: 800;
     }
 
+    /* ---------- NEW: GENERAL BEACH INFO CARD (ADDED) ---------- */
+    .infoCard{
+      margin-top: 14px;
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+      box-shadow: var(--shadowSm);
+      padding: 16px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .infoRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
+    }
+    .infoTitle{
+      margin:0;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing:-0.01em;
+    }
+    .infoSub{
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+      max-width: 560px;
+      line-height: 1.5;
+    }
+    .infoActions{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .infoBtn{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      text-decoration:none;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(46,124,246,0.22);
+      color: rgba(231,238,251,0.96);
+      font-weight: 900;
+      transition: 0.15s ease;
+      box-shadow: var(--shadowSm);
+      white-space:nowrap;
+    }
+    .infoBtn:hover{
+      background: rgba(46,124,246,0.30);
+      border-color: rgba(255,255,255,0.18);
+      transform: translateY(-1px);
+    }
+    .infoBtn svg{ opacity: .95 }
+
     /* ---------- MAIN GRID ---------- */
     .grid{
       margin-top: 14px;
@@ -663,6 +724,28 @@
         <div class="value">
           {{ issues_count }} <span class="miniTag">active</span>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ ADDED: General Beach Information (wired to your /beach/<id>/info page) -->
+  <section class="infoCard" aria-label="General beach information">
+    <div class="infoRow">
+      <div>
+        <div class="infoTitle">General Beach Information</div>
+        <div class="infoSub">
+          Address, access routes, parking, facilities and safety notes for this beach.
+        </div>
+      </div>
+
+      <div class="infoActions">
+        <a href="{{ url_for('beach_info', beach_id=beach.id) }}" class="infoBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M10 6h10M10 12h10M10 18h10" stroke="rgba(231,238,251,0.92)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M4.5 6.5h.01M4.5 12.5h.01M4.5 18.5h.01" stroke="rgba(231,238,251,0.92)" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          View information
+        </a>
       </div>
     </div>
   </section>
