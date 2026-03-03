@@ -307,8 +307,7 @@
             </div>
           </div>
           <div class="chart-inner">
-            {% set wl = chart_data.wave_labels | from_json if chart_data.wave_labels else [] %}
-            {% if chart_data.wave_heights and chart_data.wave_heights != '[]' %}
+            {% if chart_data.wave_heights and chart_data.wave_heights|length > 2 %}
               <div class="chart-wrap">
                 <canvas id="waveChart"></canvas>
               </div>
@@ -337,13 +336,14 @@
   </main>
 
   <script>
-    // --- chart data from Flask ---
-    const labels     = {{ chart_data.labels | safe }};
-    const temps      = {{ chart_data.temps | safe }};
-    const flags      = {{ chart_data.flags | safe }};
-    const flagColors = {{ chart_data.flag_colors | safe }};
-    const waveLabels = {{ chart_data.wave_labels | safe }};
-    const waveHeights= {{ chart_data.wave_heights | safe }};
+    // chart_data values are already JSON strings from json.dumps() in the route
+    const labels      = {{ chart_data.labels | safe }};
+    const temps       = {{ chart_data.temps | safe }};
+    const flags       = {{ chart_data.flags | safe }};
+    const flagColors  = {{ chart_data.flag_colors | safe }};
+    const waveLabels  = {{ chart_data.wave_labels | safe }};
+    const waveHeights = {{ chart_data.wave_heights | safe }};
+    const counts      = { green: {{ green_count }}, yellow: {{ yellow_count }}, red: {{ red_count }}, total: {{ total }} };
 
     const CHART_DEFAULTS = {
       responsive: true,
@@ -357,10 +357,10 @@
     (function(){
       const ctx = document.getElementById("flagDonut");
       if (!ctx) return;
-      const green  = {{ green_count }};
-      const yellow = {{ yellow_count }};
-      const red    = {{ red_count }};
-      const other  = {{ total }} - green - yellow - red;
+      const green  = counts.green;
+      const yellow = counts.yellow;
+      const red    = counts.red;
+      const other  = counts.total - green - yellow - red;
       new Chart(ctx, {
         type: "doughnut",
         data: {
