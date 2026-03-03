@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SwimSafe — Notifications</title>
+  <style>
+    :root{
+      --bg0:#0a1426; --bg1:#0b2a4a; --bg2:#081225;
+      --card: rgba(255,255,255,.06);
+      --border: rgba(255,255,255,.12);
+      --text:#eaf2ff; --muted:#bcd0f3; --muted2:#8fb0e6;
+      --primary:#1f6feb; --primary2:#4895ef;
+      --teal:#4cc9f0; --mint:#80ffdb;
+      --success:#2dd4bf; --warning:#ffd166; --danger:#ff5d6c;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --shadow2: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px; --radius2: 14px;
+      --font: ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; font-family:var(--font); color:var(--text); min-height:100vh;
+      background:
+        radial-gradient(1200px 700px at 10% 10%, rgba(76,201,240,.20), transparent 50%),
+        radial-gradient(1000px 650px at 90% 20%, rgba(128,255,219,.12), transparent 55%),
+        radial-gradient(900px 600px at 50% 100%, rgba(31,111,235,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
+    }
+    a{ color:inherit; text-decoration:none; }
+    .container{ max-width:860px; margin:0 auto; padding:18px 16px 48px; }
+
+    /* Topbar */
+    .topbar{
+      position:sticky; top:0; z-index:1000;
+      backdrop-filter:blur(14px);
+      background:rgba(8,18,37,.60);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .topbar-inner{
+      max-width:860px; margin:0 auto; padding:12px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .brand{ display:flex; align-items:center; gap:10px; }
+    .mark{
+      width:36px; height:36px; border-radius:12px;
+      background:linear-gradient(135deg,var(--teal),var(--mint));
+      box-shadow:0 12px 30px rgba(76,201,240,.22);
+      display:grid; place-items:center; flex:0 0 auto;
+    }
+    .mark svg{ width:20px; height:20px; fill:rgba(8,18,37,.95); }
+    .brand-title{ display:flex; flex-direction:column; line-height:1.1; }
+    .brand-title strong{ font-size:14px; letter-spacing:.2px; }
+    .brand-title span{ font-size:12px; color:var(--muted2); }
+    .nav{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    .nav a{
+      font-size:13px; color:var(--muted); padding:8px 10px;
+      border-radius:999px; border:1px solid transparent;
+      transition:background .15s,border .15s,transform .12s;
+    }
+    .nav a:hover{ background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.10); transform:translateY(-1px); }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:12px; color:var(--muted); padding:7px 10px;
+      border-radius:999px; border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04); white-space:nowrap;
+    }
+    .pill .dot{ width:8px; height:8px; border-radius:50%; background:var(--success); box-shadow:0 0 0 4px rgba(45,212,191,.14); }
+
+    /* Page head */
+    .page-head{
+      margin-top:18px; display:flex; align-items:flex-start;
+      justify-content:space-between; gap:12px; flex-wrap:wrap;
+    }
+    .page-head h1{ margin:0; font-size:28px; letter-spacing:-.5px; }
+    .page-head p{ margin:6px 0 0; color:var(--muted); font-size:14px; line-height:1.55; }
+
+    /* Flash */
+    .flash-wrap{ margin:14px 0 0; display:grid; gap:10px; }
+    .flash{
+      border-radius:14px; padding:12px; border:1px solid rgba(255,255,255,.12);
+      background:rgba(7,18,37,.35); display:flex; gap:10px; align-items:flex-start;
+    }
+    .flash .fdot{ width:10px; height:10px; border-radius:50%; margin-top:4px; flex:0 0 auto; background:var(--warning); }
+    .flash.success .fdot{ background:var(--success); }
+    .flash.error .fdot{ background:var(--danger); }
+    .flash .msg{ font-size:13px; line-height:1.45; }
+
+    /* Actions row */
+    .actions-row{
+      margin-top:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    }
+    .btn{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 14px; border-radius:14px; font-weight:900; font-size:13px;
+      border:1px solid transparent; cursor:pointer;
+      transition:transform .12s,filter .15s,background .15s;
+      text-decoration:none; white-space:nowrap;
+    }
+    .btn-primary{
+      background:linear-gradient(135deg,var(--primary),var(--primary2));
+      color:#fff; box-shadow:0 14px 28px rgba(31,111,235,.18);
+    }
+    .btn-primary:hover{ transform:translateY(-1px); filter:brightness(1.05); }
+    .btn-ghost{
+      background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.10); color:var(--text);
+    }
+    .btn-ghost:hover{ transform:translateY(-1px); background:rgba(255,255,255,.08); }
+
+    /* Notification list */
+    .notif-list{ margin-top:14px; display:grid; gap:10px; }
+
+    .notif{
+      border-radius:var(--radius2);
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.05);
+      padding:14px 16px;
+      display:flex; gap:14px; align-items:flex-start;
+      box-shadow:var(--shadow2);
+      transition:background .15s, border .15s;
+    }
+    .notif.unread{
+      border-color:rgba(76,201,240,.28);
+      background:rgba(76,201,240,.07);
+    }
+    .notif-icon{
+      width:38px; height:38px; border-radius:12px; flex:0 0 auto;
+      display:grid; place-items:center;
+      background:rgba(31,111,235,.18); border:1px solid rgba(31,111,235,.25);
+    }
+    .notif-icon svg{ width:20px; height:20px; fill:rgba(148,210,255,.90); }
+
+    .notif-body{ flex:1; min-width:0; }
+    .notif-msg{
+      font-size:14px; font-weight:700; line-height:1.5;
+      color:rgba(234,242,255,.95);
+    }
+    .notif-meta{
+      margin-top:4px; font-size:12px; color:var(--muted2);
+      display:flex; gap:10px; flex-wrap:wrap;
+    }
+    .notif-meta a{ color:rgba(76,201,240,.90); font-weight:800; }
+    .notif-meta a:hover{ text-decoration:underline; }
+
+    .unread-dot{
+      width:10px; height:10px; border-radius:50%; flex:0 0 auto; margin-top:4px;
+      background:var(--teal); box-shadow:0 0 0 4px rgba(76,201,240,.18);
+    }
+
+    .empty{
+      margin-top:14px; padding:28px;
+      border:1px dashed rgba(255,255,255,.16); border-radius:var(--radius);
+      background:rgba(0,0,0,.18); color:var(--muted);
+      text-align:center;
+    }
+    .empty strong{ display:block; font-size:16px; color:var(--text); margin-bottom:8px; }
+    .empty p{ margin:0; font-size:14px; line-height:1.55; }
+
+    footer{
+      margin-top:24px; padding:14px 4px;
+      color:rgba(188,208,243,.75); font-size:12px; line-height:1.45;
+      display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px;
+    }
+    footer a{ color:var(--muted); }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 16c1.5 0 2.3-.6 3.2-1.2.9-.6 1.9-1.3 3.8-1.3s2.9.7 3.8 1.3c.9.6 1.7 1.2 3.2 1.2s2.3-.6 3.2-1.2c.3-.2.7-.5 1.1-.7V16c-.9.2-1.5.6-2.1 1-.9.6-1.9 1.3-3.8 1.3s-2.9-.7-3.8-1.3c-.9-.6-1.7-1.2-3.2-1.2s-2.3.6-3.2 1.2c-.8.5-1.7 1.1-3.2 1.2V16z"/>
+            <path d="M3 11c1.5 0 2.3-.6 3.2-1.2.9-.6 1.9-1.3 3.8-1.3s2.9.7 3.8 1.3c.9.6 1.7 1.2 3.2 1.2s2.3-.6 3.2-1.2c.3-.2.7-.5 1.1-.7V11c-.9.2-1.5.6-2.1 1-.9.6-1.9 1.3-3.8 1.3s-2.9-.7-3.8-1.3c-.9-.6-1.7-1.2-3.2-1.2s-2.3.6-3.2 1.2C5.4 12.5 4.5 13 3 13.2V11z"/>
+          </svg>
+        </div>
+        <div class="brand-title">
+          <strong>SwimSafe</strong>
+          <span>Notifications</span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('beaches') }}">Beaches</a>
+        <a href="{{ url_for('swimmer') }}">Swimmer</a>
+        <a href="{{ url_for('swimmer_sessions') }}">Sessions</a>
+        <a href="{{ url_for('swimmer_stats') }}">My Stats</a>
+        <span class="pill"><span class="dot"></span>Swimmer access</span>
+        {% if username %}<span class="pill">{{ username }}</span>{% endif %}
+        <a href="{{ url_for('logout') }}" class="pill" style="border-color:rgba(255,255,255,.14);">Logout</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-wrap" role="status" aria-live="polite">
+          {% for cat, msg in messages %}
+            <div class="flash {{ cat|lower }}">
+              <div class="fdot"></div>
+              <div class="msg">{{ msg }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="page-head">
+      <div>
+        <h1>🔔 Notifications</h1>
+        <p>Updates from lifeguards for your favourite beaches. All notifications are marked as read when you visit this page.</p>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <form method="post" action="{{ url_for('mark_all_notifications_read') }}">
+        <button class="btn btn-ghost" type="submit">Mark all as read</button>
+      </form>
+      <a class="btn btn-ghost" href="{{ url_for('swimmer') }}">← Back to Swimmer</a>
+    </div>
+
+    {% if notifications and notifications|length > 0 %}
+      <div class="notif-list" aria-label="Notification list">
+        {% for n in notifications %}
+          <div class="notif {% if not n.is_read %}unread{% endif %}" role="article">
+            {% if not n.is_read %}
+              <div class="unread-dot" aria-label="Unread" title="Unread notification"></div>
+            {% endif %}
+
+            <div class="notif-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+              </svg>
+            </div>
+
+            <div class="notif-body">
+              <div class="notif-msg">{{ n.message }}</div>
+              <div class="notif-meta">
+                <span>{{ n.created_at.strftime("%Y-%m-%d %H:%M") }}</span>
+                {% if n.beach %}
+                  <a href="{{ url_for('beach_detail', beach_id=n.beach.id) }}">View {{ n.beach.name }} →</a>
+                {% endif %}
+                {% if n.is_read %}
+                  <span style="color:rgba(188,208,243,.45);">Read</span>
+                {% else %}
+                  <span style="color:rgba(76,201,240,.85); font-weight:900;">New</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty">
+        <strong>No notifications yet.</strong>
+        <p>You'll receive a notification here when a lifeguard submits a new sea report for one of your favourite beaches.</p>
+        <p style="margin-top:10px;">
+          <a href="{{ url_for('beaches') }}" style="color:rgba(76,201,240,.90); font-weight:800;">Browse beaches →</a>
+          and add some to your favourites from the Swimmer page.
+        </p>
+      </div>
+    {% endif %}
+
+    <footer>
+      <div>SwimSafe • Notifications</div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('swimmer') }}">Swimmer</a>
+        <a href="{{ url_for('beaches') }}">Beaches</a>
+      </div>
+    </footer>
+
+  </main>
+</body>
+</html>

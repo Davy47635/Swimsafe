@@ -7,7 +7,6 @@
 
   <style>
     :root{
-      /* Dark theme palette (matches your Home/Beaches vibe) */
       --bg0:#071221;
       --bg1:#071a2c;
       --bg2:#0b2740;
@@ -57,7 +56,6 @@
       padding: 18px 16px 60px;
     }
 
-    /* ---------- TOP BAR (match your Home/Beaches) ---------- */
     .topbar{
       display:flex;
       align-items:center;
@@ -153,7 +151,7 @@
       box-shadow: 0 0 0 4px rgba(34,197,94,0.14);
     }
 
-    /* ---------- HERO ---------- */
+    /* HERO */
     .hero{
       margin-top: 16px;
       border: 1px solid var(--stroke);
@@ -170,8 +168,7 @@
       content:"";
       position:absolute;
       inset:-80px -120px auto auto;
-      width: 340px;
-      height: 340px;
+      width: 340px; height: 340px;
       background: radial-gradient(circle at 30% 30%, rgba(46,124,246,0.35), transparent 60%);
       transform: rotate(15deg);
       pointer-events:none;
@@ -222,7 +219,7 @@
       border-radius: 10px;
     }
 
-    /* ---------- KPI ROW ---------- */
+    /* KPI ROW */
     .kpis{
       margin-top: 14px;
       display:grid;
@@ -287,7 +284,7 @@
       font-weight: 800;
     }
 
-    /* ---------- NEW: GENERAL BEACH INFO CARD (ADDED) ---------- */
+    /* INFO CARD */
     .infoCard{
       margin-top: 14px;
       border: 1px solid var(--stroke);
@@ -346,9 +343,16 @@
       border-color: rgba(255,255,255,0.18);
       transform: translateY(-1px);
     }
-    .infoBtn svg{ opacity: .95 }
+    .infoBtn.teal{
+      background: rgba(20,184,166,0.22);
+      border-color: rgba(20,184,166,0.30);
+    }
+    .infoBtn.teal:hover{
+      background: rgba(20,184,166,0.30);
+    }
+    .infoBtn svg{ opacity: .95; }
 
-    /* ---------- MAIN GRID ---------- */
+    /* MAIN GRID */
     .grid{
       margin-top: 14px;
       display:grid;
@@ -401,7 +405,6 @@
       font-weight: 900;
     }
 
-    /* Empty state */
     .empty{
       border: 1px dashed rgba(255,255,255,0.16);
       border-radius: var(--radiusSm);
@@ -427,7 +430,6 @@
     .empty p{ margin:0; font-size: 14px; font-weight: 650; color: rgba(231,238,251,0.86); }
     .empty .hint{ margin-top: 6px; font-size: 13px; color: var(--muted2); font-weight: 600; }
 
-    /* Tables */
     .tableWrap{
       margin-top: 10px;
       overflow:auto;
@@ -463,12 +465,10 @@
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
-    tbody tr:hover{
-      background: rgba(255,255,255,0.05);
-    }
+    tbody tr:hover{ background: rgba(255,255,255,0.05); }
     .mono{ font-family: var(--mono); font-size: 12px; color: rgba(231,238,251,0.82); }
 
-    /* Photos (FIXED: normal on laptop + mobile) */
+    /* Photos */
     .photos{
       margin-top: 10px;
       display:grid;
@@ -476,7 +476,6 @@
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       align-items: start;
     }
-
     .photo{
       border-radius: var(--radiusSm);
       overflow:hidden;
@@ -492,24 +491,20 @@
       border-color: rgba(255,255,255,0.18);
       box-shadow: 0 18px 40px rgba(0,0,0,0.35);
     }
-
-    /* FIXED: aspect ratio instead of fixed height */
     .photoMedia{
       width: 100%;
       aspect-ratio: 4 / 3;
       background: rgba(255,255,255,0.04);
       overflow: hidden;
       flex: 0 0 auto;
-      position: relative; /* needed for delete button overlay */
+      position: relative;
     }
-
     .photoMedia img{
       width: 100%;
       height: 100%;
       display: block;
       object-fit: cover;
     }
-
     .cap{
       padding: 10px;
       color: var(--muted);
@@ -519,7 +514,7 @@
     }
     .cap b{ color: rgba(231,238,251,0.90); }
 
-    /* Delete overlay (lifeguards only) */
+    /* Delete overlay */
     .delForm{
       position: absolute;
       top: 8px;
@@ -527,8 +522,7 @@
       margin: 0;
     }
     .delBtn{
-      width: 34px;
-      height: 34px;
+      width: 34px; height: 34px;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.18);
       background: rgba(239,68,68,0.24);
@@ -546,7 +540,52 @@
       border-color: rgba(255,255,255,0.22);
     }
 
-    /* View-only filters */
+    /* Videos */
+    .videos{
+      margin-top: 10px;
+      display:grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      align-items: start;
+    }
+    .videoCard{
+      border-radius: var(--radiusSm);
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.20);
+      box-shadow: var(--shadowSm);
+      display: flex;
+      flex-direction: column;
+    }
+    .videoMedia{
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: rgba(0,0,0,0.35);
+      overflow: hidden;
+      flex: 0 0 auto;
+      position: relative;
+    }
+    .videoMedia video{
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+    .videoCap{
+      padding: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 650;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 8px;
+      flex-wrap:wrap;
+    }
+    .videoCap b{ color: rgba(231,238,251,0.90); }
+
+    /* Filters */
     .filters{
       display:flex;
       gap: 10px;
@@ -574,10 +613,8 @@
       font-weight: 650;
     }
 
-    /* Small helper for spacing in cards */
     .stack{ display:flex; flex-direction:column; gap: 8px; }
 
-    /* Better mobile spacing */
     @media(max-width: 520px){
       .heroTitle h2{ font-size: 30px; }
       table{ min-width: 520px; }
@@ -585,13 +622,22 @@
       .select{ min-width: 100%; }
     }
 
-    /* ✅ Minimal form styling (only for upload block) */
     .uploadRow{
       display:flex;
       gap: 10px;
       flex-wrap: wrap;
       align-items:center;
       margin-top: 10px;
+    }
+    .uploadRow .titleInput{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.25);
+      color: var(--text);
+      padding: 11px 12px;
+      font-size: 14px;
+      outline: none;
+      min-width: 200px;
     }
     .btn{
       border-radius: 14px;
@@ -602,8 +648,12 @@
       font-weight: 900;
       cursor: pointer;
     }
-    .btn:hover{
-      background: rgba(46,124,246,0.30);
+    .btn:hover{ background: rgba(46,124,246,0.30); }
+
+    .divider{
+      margin: 14px 0;
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.10);
     }
   </style>
 </head>
@@ -615,7 +665,6 @@
   <header class="topbar">
     <div class="brand">
       <div class="logo" aria-hidden="true">
-        <!-- simple wave icon -->
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
           <path d="M3 14c2 0 3-1 5-1s3 1 5 1 3-1 5-1 3 1 3 1" stroke="rgba(231,238,251,0.95)" stroke-width="2" stroke-linecap="round"/>
           <path d="M3 18c2 0 3-1 5-1s3 1 5 1 3-1 5-1 3 1 3 1" stroke="rgba(231,238,251,0.75)" stroke-width="2" stroke-linecap="round"/>
@@ -645,7 +694,7 @@
     </div>
   </header>
 
-  {# ---------- helpers ---------- #}
+  {# helpers #}
   {% set latest_flag = (latest_report.flag_status if latest_report else None) %}
   {% set flag_lower = (latest_flag|lower if latest_flag else "") %}
   {% if "green" in flag_lower %}
@@ -661,6 +710,7 @@
   {% set issues_count = (issues|length if issues else 0) %}
   {% set reports_count = (reports|length if reports else 0) %}
   {% set photos_count = (photos|length if photos else 0) %}
+  {% set videos_count = (videos|length if videos else 0) %}
 
   <!-- Hero -->
   <section class="hero" aria-label="Beach overview">
@@ -671,11 +721,9 @@
           {% if beach.county %}
             <span class="chip">📍 {{ beach.county }}</span>
           {% endif %}
-
           {% if beach.latitude and beach.longitude %}
             <span class="chip">Coordinates <code>{{ beach.latitude }}</code> <code>{{ beach.longitude }}</code></span>
           {% endif %}
-
           {% if latest_report and latest_report.reported_at %}
             <span class="chip">Last updated <code>{{ latest_report.reported_at.strftime("%Y-%m-%d %H:%M") }}</code></span>
           {% else %}
@@ -728,7 +776,7 @@
     </div>
   </section>
 
-  <!-- ✅ ADDED: General Beach Information (wired to your /beach/<id>/info page) -->
+  <!-- Info / Trends action bar -->
   <section class="infoCard" aria-label="General beach information">
     <div class="infoRow">
       <div>
@@ -745,6 +793,15 @@
             <path d="M4.5 6.5h.01M4.5 12.5h.01M4.5 18.5h.01" stroke="rgba(231,238,251,0.92)" stroke-width="3" stroke-linecap="round"/>
           </svg>
           View information
+        </a>
+
+        <!-- NEW: View Trends button -->
+        <a href="{{ url_for('beach_trends', beach_id=beach.id) }}" class="infoBtn teal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3 17l4-5 4 3 4-6 4 4" stroke="rgba(231,238,251,0.92)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 21h18" stroke="rgba(231,238,251,0.55)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          View Trends
         </a>
       </div>
     </div>
@@ -773,7 +830,6 @@
               <span class="miniTag">Tide: {{ latest_report.tide or "—" }}</span>
               <span class="miniTag">Temp: {{ latest_report.temp_c if latest_report.temp_c is not none else "—" }}°C</span>
             </div>
-
             {% if latest_report.notes %}
               <div style="margin-top:6px; line-height:1.65; color: rgba(231,238,251,0.90); font-weight:650;">
                 <span style="color:var(--muted); font-weight:800; letter-spacing:.06em; text-transform:uppercase; font-size:12px;">Notes</span><br/>
@@ -788,7 +844,7 @@
             <div class="ico" aria-hidden="true">ℹ️</div>
             <div>
               <p>No official report yet.</p>
-              <div class="hint">Reports are published from the Lifeguard page. This page is view-only.</div>
+              <div class="hint">Reports are published from the Lifeguard page.</div>
             </div>
           </div>
         {% endif %}
@@ -812,7 +868,7 @@
             <option value="red">Red</option>
           </select>
         </div>
-        <div class="note">Filters are view-only and run in your browser (no data is changed).</div>
+        <div class="note">Filters are view-only and run in your browser.</div>
 
         <div class="tableWrap" role="region" aria-label="Recent reports table" tabindex="0">
           <table id="reportsTable">
@@ -837,7 +893,6 @@
                 {% else %}
                   {% set row_class = "neutral" %}
                 {% endif %}
-
                 <tr data-flag="{{ fl }}">
                   <td class="mono">{{ r.reported_at.strftime("%Y-%m-%d %H:%M") }}</td>
                   <td>{{ r.tide or "—" }}</td>
@@ -847,9 +902,7 @@
                 </tr>
               {% else %}
                 <tr>
-                  <td colspan="5" style="color:var(--muted); font-weight:700; padding:14px;">
-                    No reports yet.
-                  </td>
+                  <td colspan="5" style="color:var(--muted); font-weight:700; padding:14px;">No reports yet.</td>
                 </tr>
               {% endfor %}
             </tbody>
@@ -895,12 +948,13 @@
             <div class="ico" aria-hidden="true">✅</div>
             <div>
               <p>No open issues.</p>
-              <div class="hint">Issues are submitted from the Swimmer page. This page is view-only.</div>
+              <div class="hint">Issues are submitted from the Swimmer page.</div>
             </div>
           </div>
         {% endif %}
       </section>
 
+      <!-- Photos -->
       <section class="card">
         <div class="cardHead">
           <div>
@@ -910,7 +964,6 @@
           <span class="countBadge">{{ photos_count }} uploaded</span>
         </div>
 
-        {# ✅ Upload form (lifeguards only) #}
         {% if role == "lifeguard" %}
           <form method="post"
                 action="{{ url_for('upload_beach_photo', beach_id=beach.id) }}"
@@ -935,7 +988,6 @@
                   {% if p.image_url %}
                     <img src="{{ p.image_url }}" alt="Beach photo" loading="lazy">
                   {% endif %}
-
                   {% if role == "lifeguard" %}
                     <form method="post"
                           action="{{ url_for('delete_beach_photo', photo_id=p.id) }}"
@@ -945,14 +997,11 @@
                     </form>
                   {% endif %}
                 </div>
-
                 <figcaption class="cap">
                   <div><b>Beach photo</b></div>
                   <div>
                     {% if p.uploaded_at %}
                       Uploaded <span class="mono">{{ p.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</span>
-                    {% else %}
-                      Uploaded
                     {% endif %}
                     {% if p.uploaded_by %}
                       <span class="mono"> • by {{ p.uploaded_by }}</span>
@@ -972,18 +1021,97 @@
           </div>
         {% endif %}
       </section>
-    </div>
 
+      <!-- NEW: Beach Videos -->
+      <section class="card">
+        <div class="cardHead">
+          <div>
+            <h3>Beach Videos</h3>
+            <div class="sub">Lifeguard-uploaded videos showing current conditions at this beach.</div>
+          </div>
+          <span class="countBadge">{{ videos_count }} uploaded</span>
+        </div>
+
+        {% if role == "lifeguard" %}
+          <form method="post"
+                action="{{ url_for('upload_beach_video', beach_id=beach.id) }}"
+                enctype="multipart/form-data"
+                class="uploadRow">
+            <input class="titleInput"
+                   type="text"
+                   name="title"
+                   maxlength="150"
+                   placeholder="Video title (optional)">
+            <input class="input"
+                   type="file"
+                   name="video"
+                   accept="video/*"
+                   required>
+            <button class="btn" type="submit">Upload video</button>
+          </form>
+          <div class="note">MP4/MOV/WebM recommended. Stored securely in Cloudinary.</div>
+        {% endif %}
+
+        {% set vids = videos|default([]) %}
+        {% if vids and vids|length > 0 %}
+          <div class="videos" aria-label="Video gallery">
+            {% for v in vids %}
+              <div class="videoCard">
+                <div class="videoMedia">
+                  <video src="{{ v.video_url }}" controls preload="metadata"></video>
+                </div>
+                <div class="videoCap">
+                  <div>
+                    <div><b>{{ v.title or "Beach video" }}</b></div>
+                    <div>
+                      {% if v.uploaded_at %}
+                        <span class="mono">{{ v.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</span>
+                      {% endif %}
+                      {% if v.uploaded_by %}
+                        <span class="mono"> • {{ v.uploaded_by }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% if role == "lifeguard" %}
+                    <form method="post"
+                          action="{{ url_for('delete_beach_video', video_id=v.id) }}"
+                          onsubmit="return confirm('Delete this video? This cannot be undone.');">
+                      <button type="submit" class="delBtn" title="Delete video" style="position:static; width:auto; padding: 6px 10px; border-radius:10px; font-size:12px;">
+                        Delete
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty">
+            <div class="ico" aria-hidden="true">🎥</div>
+            <div>
+              <p>No videos yet.</p>
+              <div class="hint">
+                {% if role == "lifeguard" %}
+                  Upload a video above to show current conditions at this beach.
+                {% else %}
+                  Videos are added by lifeguards when available.
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </section>
+
+    </div>
   </div>
 
 </div>
 
 <script>
-  // View-only: client-side search + flag filter (no server changes)
   (function(){
     const search = document.getElementById("reportSearch");
     const filter = document.getElementById("flagFilter");
-    const table = document.getElementById("reportsTable");
+    const table  = document.getElementById("reportsTable");
     if(!search || !filter || !table) return;
 
     const rows = Array.from(table.querySelectorAll("tbody tr"));
@@ -993,7 +1121,6 @@
     function apply(){
       const q = norm(search.value);
       const f = norm(filter.value);
-
       rows.forEach(row => {
         if(!row.getAttribute("data-flag")){
           row.style.display = (q || f) ? "none" : "";
@@ -1001,8 +1128,8 @@
         }
         const text = norm(row.innerText);
         const flag = norm(row.getAttribute("data-flag"));
-        const okQ = !q || text.includes(q);
-        const okF = !f || flag.includes(f);
+        const okQ  = !q || text.includes(q);
+        const okF  = !f || flag.includes(f);
         row.style.display = (okQ && okF) ? "" : "none";
       });
     }

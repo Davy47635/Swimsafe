@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SwimSafe — {{ beach.name }} — Trend Analysis</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --bg0:#0a1426; --bg1:#0b2a4a; --bg2:#081225;
+      --card:rgba(255,255,255,.06); --border:rgba(255,255,255,.12);
+      --text:#eaf2ff; --muted:#bcd0f3; --muted2:#8fb0e6;
+      --primary:#1f6feb; --primary2:#4895ef;
+      --teal:#4cc9f0; --mint:#80ffdb;
+      --success:#2dd4bf; --warning:#ffd166; --danger:#ff5d6c;
+      --shadow:0 18px 60px rgba(0,0,0,.45);
+      --shadow2:0 10px 30px rgba(0,0,0,.35);
+      --radius:18px; --radius2:14px;
+      --font:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; font-family:var(--font); color:var(--text); min-height:100vh;
+      background:
+        radial-gradient(1200px 700px at 10% 10%, rgba(76,201,240,.20), transparent 50%),
+        radial-gradient(1000px 650px at 90% 20%, rgba(128,255,219,.12), transparent 55%),
+        radial-gradient(900px 600px at 50% 100%, rgba(31,111,235,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
+    }
+    a{ color:inherit; text-decoration:none; }
+    .container{ max-width:1200px; margin:0 auto; padding:18px 16px 48px; }
+
+    /* Topbar */
+    .topbar{
+      position:sticky; top:0; z-index:1000;
+      backdrop-filter:blur(14px); background:rgba(8,18,37,.60);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .topbar-inner{
+      max-width:1200px; margin:0 auto; padding:12px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .brand{ display:flex; align-items:center; gap:10px; }
+    .mark{
+      width:36px; height:36px; border-radius:12px;
+      background:linear-gradient(135deg,var(--teal),var(--mint));
+      box-shadow:0 12px 30px rgba(76,201,240,.22);
+      display:grid; place-items:center; flex:0 0 auto;
+    }
+    .mark svg{ width:20px; height:20px; fill:rgba(8,18,37,.95); }
+    .brand-title{ display:flex; flex-direction:column; line-height:1.1; }
+    .brand-title strong{ font-size:14px; } .brand-title span{ font-size:12px; color:var(--muted2); }
+    .nav{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    .nav a{
+      font-size:13px; color:var(--muted); padding:8px 10px;
+      border-radius:999px; border:1px solid transparent;
+      transition:background .15s,border .15s,transform .12s;
+    }
+    .nav a:hover{ background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.10); transform:translateY(-1px); }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:12px; color:var(--muted); padding:7px 10px;
+      border-radius:999px; border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04); white-space:nowrap;
+    }
+    .dot{ width:8px; height:8px; border-radius:50%; background:var(--success); box-shadow:0 0 0 4px rgba(45,212,191,.14); }
+
+    /* Page head */
+    .page-head{
+      margin-top:18px; display:flex; align-items:flex-start;
+      justify-content:space-between; gap:12px; flex-wrap:wrap;
+    }
+    .page-head h1{ margin:0; font-size:26px; letter-spacing:-.5px; line-height:1.12; }
+    .page-head p{ margin:6px 0 0; color:var(--muted); font-size:14px; line-height:1.55; }
+
+    .btn{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 14px; border-radius:14px; font-weight:900; font-size:13px;
+      border:1px solid transparent; cursor:pointer;
+      transition:transform .12s,filter .15s,background .15s;
+      text-decoration:none; white-space:nowrap;
+    }
+    .btn-ghost{
+      background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.10); color:var(--text);
+    }
+    .btn-ghost:hover{ transform:translateY(-1px); background:rgba(255,255,255,.08); }
+
+    /* KPI row */
+    .kpis{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap:12px;
+    }
+    .kpi{
+      border-radius:var(--radius2); padding:14px;
+      background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.10);
+      box-shadow:var(--shadow2);
+    }
+    .kpi .k{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted2); font-weight:800; }
+    .kpi .v{ margin-top:8px; font-size:22px; font-weight:900; letter-spacing:-.02em; }
+    .kpi .sub{ margin-top:4px; font-size:12px; color:var(--muted2); }
+    .kpi.green .v{ color:#86efac; }
+    .kpi.yellow .v{ color:#fde68a; }
+    .kpi.red .v{ color:#fca5a5; }
+
+    /* Chart cards */
+    .chart-grid{
+      margin-top:16px;
+      display:grid; grid-template-columns:1fr 1fr; gap:16px;
+    }
+    @media(max-width:900px){ .chart-grid{ grid-template-columns:1fr; } }
+
+    .chart-card{
+      border-radius:var(--radius); background:var(--card);
+      border:1px solid rgba(255,255,255,.10); box-shadow:var(--shadow2); overflow:hidden;
+    }
+    .chart-head{
+      padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.08);
+      background:rgba(8,18,37,.18);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .chart-head h2{ margin:0; font-size:14px; letter-spacing:.2px; }
+    .chart-head .sub{ font-size:12px; color:var(--muted2); }
+    .chart-inner{ padding:16px; }
+    .chart-wrap{ position:relative; height:220px; }
+
+    /* Flag history donut */
+    .donut-row{ display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+    .donut-wrap{ width:160px; height:160px; flex:0 0 auto; }
+    .legend{ display:grid; gap:8px; }
+    .legend-item{ display:flex; align-items:center; gap:8px; font-size:13px; }
+    .legend-dot{ width:12px; height:12px; border-radius:50%; flex:0 0 auto; }
+
+    /* Empty state */
+    .empty{
+      padding:24px; text-align:center;
+      border:1px dashed rgba(255,255,255,.16); border-radius:var(--radius2);
+      background:rgba(0,0,0,.18); color:var(--muted);
+    }
+    .empty strong{ display:block; font-size:14px; color:var(--text); margin-bottom:6px; }
+
+    /* No data note */
+    .no-data{ font-size:13px; color:var(--muted2); margin:8px 0 0; }
+
+    footer{
+      margin-top:24px; padding:14px 4px;
+      color:rgba(188,208,243,.75); font-size:12px;
+      display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px;
+    }
+    footer a{ color:var(--muted); }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 16c1.5 0 2.3-.6 3.2-1.2.9-.6 1.9-1.3 3.8-1.3s2.9.7 3.8 1.3c.9.6 1.7 1.2 3.2 1.2s2.3-.6 3.2-1.2c.3-.2.7-.5 1.1-.7V16c-.9.2-1.5.6-2.1 1-.9.6-1.9 1.3-3.8 1.3s-2.9-.7-3.8-1.3c-.9-.6-1.7-1.2-3.2-1.2s-2.3.6-3.2 1.2c-.8.5-1.7 1.1-3.2 1.2V16z"/>
+            <path d="M3 11c1.5 0 2.3-.6 3.2-1.2.9-.6 1.9-1.3 3.8-1.3s2.9.7 3.8 1.3c.9.6 1.7 1.2 3.2 1.2s2.3-.6 3.2-1.2c.3-.2.7-.5 1.1-.7V11c-.9.2-1.5.6-2.1 1-.9.6-1.9 1.3-3.8 1.3s-2.9-.7-3.8-1.3c-.9-.6-1.7-1.2-3.2-1.2s-2.3.6-3.2 1.2C5.4 12.5 4.5 13 3 13.2V11z"/>
+          </svg>
+        </div>
+        <div class="brand-title">
+          <strong>SwimSafe</strong>
+          <span>Trend analysis</span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('beaches') }}">Beaches</a>
+        <a href="{{ url_for('beach_detail', beach_id=beach.id) }}">{{ beach.name }}</a>
+        {% if role == "swimmer" %}<a href="{{ url_for('swimmer') }}">Swimmer</a>{% endif %}
+        {% if role == "lifeguard" %}<a href="{{ url_for('lifeguard') }}">Lifeguard</a>{% endif %}
+        {% if username %}<span class="pill">{{ username }}</span>{% endif %}
+        <a href="{{ url_for('logout') }}" class="pill" style="border-color:rgba(255,255,255,.14);">Logout</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="page-head">
+      <div>
+        <h1>📈 {{ beach.name }} — Trend Analysis</h1>
+        <p>Long-term flag history, water temperature, and wave height trends based on all recorded reports.</p>
+      </div>
+      <a class="btn btn-ghost" href="{{ url_for('beach_detail', beach_id=beach.id) }}">← Back to beach</a>
+    </div>
+
+    {% if total == 0 %}
+      <div class="empty" style="margin-top:18px;">
+        <strong>No reports recorded yet for {{ beach.name }}.</strong>
+        Trends will appear once lifeguards start submitting sea reports.
+      </div>
+    {% else %}
+
+      <!-- KPI row -->
+      <div class="kpis" aria-label="Summary statistics">
+        <div class="kpi">
+          <div class="k">Total reports</div>
+          <div class="v">{{ total }}</div>
+          <div class="sub">all time</div>
+        </div>
+        <div class="kpi green">
+          <div class="k">Green flag</div>
+          <div class="v">{{ green_count }}</div>
+          <div class="sub">{{ ((green_count / total) * 100)|round(0)|int }}% of reports</div>
+        </div>
+        <div class="kpi yellow">
+          <div class="k">Yellow / Amber</div>
+          <div class="v">{{ yellow_count }}</div>
+          <div class="sub">{{ ((yellow_count / total) * 100)|round(0)|int }}% of reports</div>
+        </div>
+        <div class="kpi red">
+          <div class="k">Red flag</div>
+          <div class="v">{{ red_count }}</div>
+          <div class="sub">{{ ((red_count / total) * 100)|round(0)|int }}% of reports</div>
+        </div>
+        <div class="kpi">
+          <div class="k">Avg water temp</div>
+          <div class="v">{{ avg_temp if avg_temp is not none else "—" }}{% if avg_temp is not none %}°C{% endif %}</div>
+          <div class="sub">{% if min_temp is not none %}{{ min_temp }}°C – {{ max_temp }}°C range{% else %}no temp data{% endif %}</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="chart-grid">
+
+        <!-- Flag history donut -->
+        <div class="chart-card">
+          <div class="chart-head">
+            <div>
+              <h2>Flag Status Distribution</h2>
+              <div class="sub">All {{ total }} reports</div>
+            </div>
+          </div>
+          <div class="chart-inner">
+            <div class="donut-row">
+              <div class="donut-wrap">
+                <canvas id="flagDonut"></canvas>
+              </div>
+              <div class="legend">
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:#22c55e;"></div>
+                  Green — {{ green_count }} reports
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:#fbbf24;"></div>
+                  Yellow — {{ yellow_count }} reports
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:#ef4444;"></div>
+                  Red — {{ red_count }} reports
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:rgba(148,163,184,.6);"></div>
+                  Other — {{ total - green_count - yellow_count - red_count }} reports
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Water temperature over time -->
+        <div class="chart-card">
+          <div class="chart-head">
+            <div>
+              <h2>Water Temperature</h2>
+              <div class="sub">°C over time (all reports with temp data)</div>
+            </div>
+          </div>
+          <div class="chart-inner">
+            {% if avg_temp is not none %}
+              <div class="chart-wrap">
+                <canvas id="tempChart"></canvas>
+              </div>
+            {% else %}
+              <div class="empty"><strong>No temperature data recorded.</strong></div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Flag status over time (line — numeric 1=green, 2=yellow, 3=red) -->
+        <div class="chart-card">
+          <div class="chart-head">
+            <div>
+              <h2>Flag History Over Time</h2>
+              <div class="sub">1 = Green · 2 = Yellow · 3 = Red · 0 = Other</div>
+            </div>
+          </div>
+          <div class="chart-inner">
+            <div class="chart-wrap">
+              <canvas id="flagLine"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wave height (from notes) -->
+        <div class="chart-card">
+          <div class="chart-head">
+            <div>
+              <h2>Wave Height (API assist notes)</h2>
+              <div class="sub">Extracted from report notes where available</div>
+            </div>
+          </div>
+          <div class="chart-inner">
+            {% set wl = chart_data.wave_labels | from_json if chart_data.wave_labels else [] %}
+            {% if chart_data.wave_heights and chart_data.wave_heights != '[]' %}
+              <div class="chart-wrap">
+                <canvas id="waveChart"></canvas>
+              </div>
+            {% else %}
+              <div class="empty">
+                <strong>No wave height data in notes.</strong>
+                Wave height is extracted from reports that used the "Use Suggested Values" button in the lifeguard dashboard.
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+    {% endif %}
+
+    <footer>
+      <div>SwimSafe • {{ beach.name }} trends</div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('beaches') }}">Beaches</a>
+        <a href="{{ url_for('beach_detail', beach_id=beach.id) }}">{{ beach.name }}</a>
+      </div>
+    </footer>
+
+  </main>
+
+  <script>
+    // --- chart data from Flask ---
+    const labels     = {{ chart_data.labels | safe }};
+    const temps      = {{ chart_data.temps | safe }};
+    const flags      = {{ chart_data.flags | safe }};
+    const flagColors = {{ chart_data.flag_colors | safe }};
+    const waveLabels = {{ chart_data.wave_labels | safe }};
+    const waveHeights= {{ chart_data.wave_heights | safe }};
+
+    const CHART_DEFAULTS = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: "rgba(188,208,243,.85)", font: { size: 12 } } }
+      }
+    };
+
+    // Flag donut
+    (function(){
+      const ctx = document.getElementById("flagDonut");
+      if (!ctx) return;
+      const green  = {{ green_count }};
+      const yellow = {{ yellow_count }};
+      const red    = {{ red_count }};
+      const other  = {{ total }} - green - yellow - red;
+      new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["Green", "Yellow", "Red", "Other"],
+          datasets: [{
+            data: [green, yellow, red, other],
+            backgroundColor: [
+              "rgba(34,197,94,0.80)",
+              "rgba(251,191,36,0.80)",
+              "rgba(239,68,68,0.80)",
+              "rgba(148,163,184,0.50)",
+            ],
+            borderColor: "rgba(255,255,255,.08)",
+            borderWidth: 2,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          cutout: "65%",
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    })();
+
+    // Temperature line chart
+    (function(){
+      const ctx = document.getElementById("tempChart");
+      if (!ctx) return;
+      // filter out null temps
+      const filtered = labels.reduce((acc, l, i) => {
+        if (temps[i] !== null) {
+          acc.labels.push(l);
+          acc.data.push(temps[i]);
+        }
+        return acc;
+      }, { labels: [], data: [] });
+
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: filtered.labels,
+          datasets: [{
+            label: "Water temp (°C)",
+            data: filtered.data,
+            borderColor: "rgba(76,201,240,.85)",
+            backgroundColor: "rgba(76,201,240,.12)",
+            borderWidth: 2,
+            pointRadius: filtered.data.length > 60 ? 0 : 3,
+            tension: 0.35,
+            fill: true,
+          }]
+        },
+        options: {
+          ...CHART_DEFAULTS,
+          scales: {
+            x: {
+              ticks: { color: "rgba(188,208,243,.6)", maxTicksLimit: 8, maxRotation: 0 },
+              grid: { color: "rgba(255,255,255,.06)" }
+            },
+            y: {
+              ticks: { color: "rgba(188,208,243,.6)" },
+              grid: { color: "rgba(255,255,255,.06)" }
+            }
+          }
+        }
+      });
+    })();
+
+    // Flag history line
+    (function(){
+      const ctx = document.getElementById("flagLine");
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Flag status (1=Green, 2=Yellow, 3=Red)",
+            data: flags,
+            backgroundColor: flagColors,
+            borderWidth: 0,
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          ...CHART_DEFAULTS,
+          scales: {
+            x: {
+              ticks: { color: "rgba(188,208,243,.6)", maxTicksLimit: 8, maxRotation: 0 },
+              grid: { color: "rgba(255,255,255,.06)" }
+            },
+            y: {
+              min: 0, max: 4,
+              ticks: {
+                color: "rgba(188,208,243,.6)",
+                callback: v => ({ 1:"Green", 2:"Yellow", 3:"Red", 0:"Other" }[v] || "")
+              },
+              grid: { color: "rgba(255,255,255,.06)" }
+            }
+          }
+        }
+      });
+    })();
+
+    // Wave height
+    (function(){
+      const ctx = document.getElementById("waveChart");
+      if (!ctx || !waveHeights || waveHeights.length === 0) return;
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: waveLabels,
+          datasets: [{
+            label: "Wave height (m)",
+            data: waveHeights,
+            borderColor: "rgba(128,255,219,.80)",
+            backgroundColor: "rgba(128,255,219,.10)",
+            borderWidth: 2,
+            pointRadius: waveHeights.length > 30 ? 0 : 3,
+            tension: 0.35,
+            fill: true,
+          }]
+        },
+        options: {
+          ...CHART_DEFAULTS,
+          scales: {
+            x: {
+              ticks: { color: "rgba(188,208,243,.6)", maxTicksLimit: 6, maxRotation: 0 },
+              grid: { color: "rgba(255,255,255,.06)" }
+            },
+            y: {
+              min: 0,
+              ticks: { color: "rgba(188,208,243,.6)" },
+              grid: { color: "rgba(255,255,255,.06)" }
+            }
+          }
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

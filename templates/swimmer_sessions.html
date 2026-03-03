@@ -142,6 +142,19 @@
       box-shadow: 0 0 0 4px rgba(45,212,191,.14);
     }
 
+    /* Notification bell */
+    .pill.notif-bell{
+      border-color: rgba(76,201,240,.35);
+      background: rgba(76,201,240,.10);
+      color: var(--text);
+      font-weight: 900;
+      text-decoration: none;
+    }
+    .pill.notif-bell:hover{
+      background: rgba(76,201,240,.16);
+      transform: translateY(-1px);
+    }
+
     /* Flash messages */
     .flash-wrap{
       margin: 14px 0 0;
@@ -392,7 +405,7 @@
     table{
       width:100%;
       border-collapse: collapse;
-      min-width: 1100px; /* widened due to new columns */
+      min-width: 1100px;
     }
     th, td{
       padding: 12px 12px;
@@ -544,6 +557,8 @@
         <a href="{{ url_for('beaches') }}">Beaches</a>
         <a href="{{ url_for('swimmer') }}">Swimmer</a>
         <a href="{{ url_for('swimmer_sessions') }}">Sessions</a>
+        <a href="{{ url_for('swimmer_stats') }}">My Stats</a>
+        <a href="{{ url_for('swimming_videos') }}">Videos</a>
 
         <span class="pill" title="Logged in status">
           <span class="dot" aria-hidden="true"></span>
@@ -552,8 +567,19 @@
 
         {% if username %}
           <span class="pill" title="Logged in user" style="border-color: rgba(255,255,255,.14);">
-            User: <strong style="color:var(--text)">{{ username }}</strong>
+            {{ username }}
           </span>
+        {% endif %}
+
+        {# Notification bell #}
+        {% if unread_count is defined and unread_count > 0 %}
+          <a href="{{ url_for('notifications_page') }}" class="pill notif-bell" title="{{ unread_count }} unread notification(s)">
+            🔔 {{ unread_count }} new
+          </a>
+        {% else %}
+          <a href="{{ url_for('notifications_page') }}" class="pill" style="border-color:rgba(255,255,255,.14);" title="Notifications">
+            🔔
+          </a>
         {% endif %}
 
         <a href="{{ url_for('logout') }}" class="pill" style="border-color: rgba(255,255,255,.14);">Logout</a>
@@ -600,7 +626,7 @@
           <div>
             <h2>Upcoming Sessions</h2>
             <div class="small">
-              Soonest first. New: safety badge (API) + training log actions (complete/skip).
+              Soonest first. Safety badge (API) + training log actions (complete/skip).
             </div>
           </div>
           <div class="chip">Next swims</div>
@@ -659,7 +685,6 @@
                   <td class="nowrap">{{ (s.duration_min ~ " min") if s.duration_min else "—" }}</td>
                   <td class="nowrap">{{ (s.distance_m ~ " m") if s.distance_m else "—" }}</td>
 
-                  <!-- Safety badge -->
                   <td class="nowrap">
                     {% if adv %}
                       {% if adv.level_class == "unsafe" %}
@@ -682,7 +707,6 @@
                     {% endif %}
                   </td>
 
-                  <!-- Status -->
                   <td class="nowrap">
                     {% if status == "completed" %}
                       <span class="pilltag low">COMPLETED</span>
@@ -703,13 +727,11 @@
                     {% endif %}
                   </td>
 
-                  <!-- Log / Actions -->
                   <td>
                     <details>
                       <summary>Log result</summary>
                       <div class="details-body">
 
-                        <!-- Complete form -->
                         <form method="post" action="{{ url_for('complete_swimmer_session', session_id=s.id) }}" style="margin-top:8px;">
                           <div class="row2">
                             <div>
@@ -746,7 +768,6 @@
                           </button>
                         </form>
 
-                        <!-- Skip form -->
                         <form method="post" action="{{ url_for('skip_swimmer_session', session_id=s.id) }}" style="margin-top:12px;">
                           <label>Skip reason (optional)</label>
                           <div class="field" style="margin-bottom:10px;">
@@ -771,7 +792,6 @@
                     </details>
                   </td>
 
-                  <!-- Delete -->
                   <td class="nowrap">
                     <form method="post"
                           action="{{ url_for('delete_swimmer_session', session_id=s.id) }}"
@@ -816,17 +836,14 @@
         <div class="card-head">
           <div>
             <h2>Plan a New Session</h2>
-            <div class="small">New: pick a preset to auto-fill plan fields. You can still edit anything after.</div>
+            <div class="small">Pick a preset to auto-fill plan fields. You can still edit anything after.</div>
           </div>
-          <div class="chip" title="Required fields">
-            * required
-          </div>
+          <div class="chip" title="Required fields">* required</div>
         </div>
 
         <div class="card-inner">
           <form method="post" action="{{ url_for('create_swimmer_session') }}" id="planForm">
 
-            <!-- Presets (NEW) -->
             <label for="preset_id">Session preset (optional)</label>
             <div class="field">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H7v-2h3v2zm0-4H7v-2h3v2zm0-4H7V7h3v2zm7 8h-5v-2h5v2zm0-4h-5v-2h5v2zm0-4h-5V7h5v2z"/></svg>
@@ -838,7 +855,7 @@
               </select>
             </div>
             <div class="hint" style="margin-top:-4px;">
-              Presets fill goal/intensity/skill + suggested duration/distance/notes. You can override anything.
+              Presets fill goal/intensity/skill + suggested duration/distance/notes.
             </div>
 
             <label for="beach_id">Beach *</label>
@@ -940,7 +957,7 @@
       <div class="card-head">
         <div>
           <h2>Recent Past Sessions</h2>
-          <div class="small">Past planned time (latest first). Now shows status if you logged it.</div>
+          <div class="small">Past planned time (latest first). Shows status if you logged it.</div>
         </div>
         <div class="chip">Recent: <strong style="color: var(--text);">{{ recent_sessions|length }}</strong></div>
       </div>
@@ -1041,6 +1058,7 @@
           <a href="{{ url_for('beaches') }}">Beaches</a>
           <a href="{{ url_for('swimmer') }}">Swimmer</a>
           <a href="{{ url_for('swimmer_sessions') }}">Sessions</a>
+          <a href="{{ url_for('swimmer_stats') }}">My Stats</a>
         </div>
       </div>
     </footer>
@@ -1048,7 +1066,6 @@
   </main>
 
   <script>
-    // Default datetime-local to "now + 1 hour" (rounded to 5 mins)
     (function(){
       const el = document.getElementById("planned_for");
       if(!el) return;
@@ -1067,31 +1084,31 @@
       el.value = v;
     })();
 
-    // Presets (NEW): auto-fill fields from SESSION_PRESETS passed to template
     (function(){
       const presetSelect = document.getElementById("preset_id");
       if(!presetSelect) return;
 
-      const goalEl = document.getElementById("goal");
+      const goalEl      = document.getElementById("goal");
       const intensityEl = document.getElementById("intensity");
-      const skillEl = document.getElementById("skill_level");
-      const durEl = document.getElementById("duration_min");
-      const distEl = document.getElementById("distance_m");
-      const notesEl = document.getElementById("notes");
+      const skillEl     = document.getElementById("skill_level");
+      const durEl       = document.getElementById("duration_min");
+      const distEl      = document.getElementById("distance_m");
+      const notesEl     = document.getElementById("notes");
 
-      const presets = {{ (presets or []) | tojson }};
+      const presets = [
+        { id: "easy_recovery",    goal: "Endurance", intensity: "Easy",     skill_level: "Beginner",     duration_min: 25, distance_m: null, notes: "Easy continuous swim. Focus on relaxed breathing and sighting." },
+        { id: "endurance_steady", goal: "Endurance", intensity: "Moderate", skill_level: "Intermediate", duration_min: 45, distance_m: 1500, notes: "Steady pace. Practice sighting every 6-10 strokes. Keep effort controlled." },
+        { id: "technique_drills", goal: "Technique", intensity: "Easy",     skill_level: "Intermediate", duration_min: 30, distance_m: null, notes: "Include a drill block (catch, body position, bilateral breathing) + short easy swims." },
+        { id: "race_pace",        goal: "Race-pace", intensity: "Hard",     skill_level: "Advanced",     duration_min: 40, distance_m: 2000, notes: "Warm up, 6-10 hard efforts with rest, cool down. Only if conditions are safe." }
+      ];
 
       function applyPreset(p){
         if(!p) return;
-        if(goalEl && p.goal) goalEl.value = p.goal;
+        if(goalEl && p.goal)           goalEl.value = p.goal;
         if(intensityEl && p.intensity) intensityEl.value = p.intensity;
-        if(skillEl && p.skill_level) skillEl.value = p.skill_level;
-
-        // duration/distance can be null
-        if(durEl) durEl.value = (p.duration_min != null ? p.duration_min : "");
-        if(distEl) distEl.value = (p.distance_m != null ? p.distance_m : "");
-
-        // only overwrite notes if empty (so you don't lose typing)
+        if(skillEl && p.skill_level)   skillEl.value = p.skill_level;
+        if(durEl)  durEl.value  = (p.duration_min != null ? p.duration_min : "");
+        if(distEl) distEl.value = (p.distance_m   != null ? p.distance_m   : "");
         if(notesEl && p.notes){
           if(!notesEl.value || notesEl.value.trim().length === 0){
             notesEl.value = p.notes;
@@ -1110,4 +1127,3 @@
 
 </body>
 </html>
-

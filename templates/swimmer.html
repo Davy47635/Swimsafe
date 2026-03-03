@@ -7,21 +7,17 @@
 
   <style>
     :root{
-      /* ✅ EXACT Lifeguard-style ocean theme */
       --bg: radial-gradient(1200px 600px at 10% -10%, #0f2a44 0%, #061726 55%, #050f1a 100%);
       --card: rgba(255,255,255,0.06);
       --card-strong: rgba(255,255,255,0.09);
       --line: rgba(255,255,255,0.14);
       --text: #f8fafc;
       --muted: #cbd5e1;
-
       --btn: #3b82f6;
       --btn-hover: #2563eb;
-
       --ok: #22c55e;
       --warn: #fbbf24;
       --danger: #ef4444;
-
       --shadow:
         0 0 0 1px rgba(255,255,255,0.04),
         0 20px 40px rgba(2,6,23,.6);
@@ -42,7 +38,6 @@
 
     .container{max-width:1150px;margin:28px auto;padding:0 16px}
 
-    /* Top nav (match lifeguard) */
     nav{
       display:flex;
       gap:16px;
@@ -101,7 +96,6 @@
       box-shadow:0 0 0 4px rgba(34,197,94,0.10);
     }
 
-    /* ✅ new: inline pill that behaves like a link */
     .pill.link{
       color: rgba(248,250,252,0.92);
       text-decoration:none;
@@ -111,7 +105,17 @@
       text-decoration:none;
     }
 
-    /* Header */
+    /* Notification bell pill */
+    .pill.notif-bell{
+      border-color: rgba(76,201,240,.35);
+      background: rgba(76,201,240,.10);
+      color: var(--text);
+      font-weight:900;
+    }
+    .pill.notif-bell:hover{
+      background: rgba(76,201,240,.16);
+    }
+
     .pagehead{
       display:flex;
       gap:16px;
@@ -123,7 +127,6 @@
     h1{margin:0;font-size:26px}
     .subtitle{margin:6px 0 0 0;color:var(--muted);max-width:75ch}
 
-    /* Cards / grid */
     .card{
       background:var(--card);
       border:1px solid var(--line);
@@ -162,7 +165,6 @@
     .kpi .label{font-size:13px;color:var(--muted);margin:0}
     .kpi .value{font-size:18px;font-weight:900;margin:2px 0 0 0}
 
-    /* Flash */
     .flash{
       margin:14px 0;
       padding:12px 14px;
@@ -173,7 +175,6 @@
       backdrop-filter: blur(10px);
     }
 
-    /* Tabs */
     .tabs{
       display:flex;gap:8px;flex-wrap:wrap;
       margin-top:14px;
@@ -198,7 +199,6 @@
     .tabpane{display:none;margin-top:14px}
     .tabpane.active{display:block}
 
-    /* Forms (match lifeguard input feel) */
     label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
     select, textarea, input[type="text"]{
       width:100%;
@@ -234,7 +234,6 @@
       font-weight:900;
     }
     .btn.secondary:hover{background: rgba(255,255,255,0.09)}
-
     .btn.small{
       padding:8px 10px;
       border-radius:12px;
@@ -260,7 +259,6 @@
       .row .span-6,.row .span-5,.row .span-4,.row .span-3{grid-column: span 12;}
     }
 
-    /* Table */
     .tablewrap{
       border:1px solid rgba(255,255,255,0.14);
       border-radius:16px;
@@ -282,7 +280,6 @@
     .small{font-size:13px;color:var(--muted)}
     .nowrap{white-space:nowrap}
 
-    /* Chips */
     .chip{
       display:inline-flex;
       align-items:center;
@@ -303,7 +300,6 @@
       opacity:.85;
     }
 
-    /* Empty state */
     .empty{
       padding:16px;
       border:1px dashed rgba(255,255,255,0.16);
@@ -313,7 +309,6 @@
     }
     .empty strong{color:var(--text)}
 
-    /* Snapshot */
     .snapshot{
       display:grid;
       grid-template-columns: repeat(12, 1fr);
@@ -366,7 +361,6 @@
       color:var(--muted);
     }
 
-    /* Favourites list */
     .favlist{
       margin-top:10px;
       border:1px solid rgba(255,255,255,0.14);
@@ -402,7 +396,6 @@
     .favactions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
     form.inline{display:inline}
 
-    /* Compact cards inside tabs (NO GREY!) */
     .subcard{
       background: rgba(255,255,255,0.05);
       border:1px solid rgba(255,255,255,0.14);
@@ -422,15 +415,26 @@
         <div class="nav-links">
           <a href="{{ url_for('home') }}">Home</a>
           <a href="{{ url_for('beaches') }}">Beaches</a>
-          <a href="{{ url_for('lifeguard') }}">Lifeguard</a>
-          <!-- ✅ NEW: training-focused page -->
           <a href="{{ url_for('swimmer_sessions') }}">Session Planner</a>
+          <a href="{{ url_for('swimmer_stats') }}">My Stats</a>
+          <a href="{{ url_for('swimming_videos') }}">Videos</a>
         </div>
       </div>
 
       <div class="actions">
         <div class="pill" title="Role"><span class="statusdot"></span><strong>Swimmer</strong> access</div>
-        <!-- ✅ NEW: quick CTA to planner -->
+
+        {# Notification bell — only shows when there are unread notifications #}
+        {% if unread_count is defined and unread_count > 0 %}
+          <a class="pill link notif-bell" href="{{ url_for('notifications_page') }}" title="{{ unread_count }} unread notification(s)">
+            🔔 <strong>{{ unread_count }} new</strong>
+          </a>
+        {% else %}
+          <a class="pill link" href="{{ url_for('notifications_page') }}" title="Notifications">
+            🔔 Notifications
+          </a>
+        {% endif %}
+
         <a class="pill link" href="{{ url_for('swimmer_sessions') }}" title="Plan an open-water session">
           🧭 <strong>Plan a session</strong>
         </a>
@@ -464,9 +468,12 @@
           Source: <strong>Official reports</strong>
         </div>
 
-        <!-- ✅ NEW: training tool badge -->
         <a class="pill link" href="{{ url_for('swimmer_sessions') }}" title="Open training planner">
           Training tools: <strong>Session Planner</strong>
+        </a>
+
+        <a class="pill link" href="{{ url_for('swimmer_stats') }}" title="View your swimming stats">
+          📊 <strong>My Stats</strong>
         </a>
 
         {% if username %}
@@ -546,7 +553,6 @@
 
       <div class="card col-12">
 
-        <!-- Safety Snapshot -->
         <div class="snapshot">
           <div class="snap-left">
             <h3 style="margin:0 0 6px 0">Safety Snapshot</h3>
@@ -677,7 +683,6 @@
 
             <div style="height:12px"></div>
 
-            <!-- FAVOURITES -->
             <h3 style="margin:0 0 6px 0">Favourite beaches</h3>
 
             {% if favourites is defined and favourites|length > 0 %}
@@ -873,8 +878,8 @@
                     <div class="span-12">
                       <label for="issue_desc">Description *</label>
                       <textarea id="issue_desc" name="issue_desc" maxlength="255" required
-                        placeholder="Briefly describe what you saw (e.g., rip current near the pier, lots of debris near entry point)…"></textarea>
-                      <div class="note">Max 255 characters. Keep it factual and location-specific if possible.</div>
+                        placeholder="Briefly describe what you saw…"></textarea>
+                      <div class="note">Max 255 characters.</div>
                     </div>
 
                     <div class="span-4">
@@ -900,13 +905,6 @@
                   <li>Missing flags / confusing signage</li>
                   <li>Any hazard affecting safe entry/exit</li>
                 </ul>
-
-                <div style="height:12px"></div>
-
-                <div class="empty" style="border-style:solid">
-                  <strong>Future improvement:</strong><br/>
-                  Photo upload + map pin for exact hazard location.
-                </div>
               </div>
             </div>
           </div>
@@ -940,7 +938,7 @@
                 <h3 style="margin-top:0">Rip currents</h3>
                 <p class="small">
                   If you feel yourself being pulled away from shore, stay calm and avoid fighting the current directly.
-                  Swim parallel to the beach until you’re out of the fast-moving water, then swim back in.
+                  Swim parallel to the beach until you're out of the fast-moving water, then swim back in.
                 </p>
               </div>
             </div>
@@ -983,7 +981,6 @@
   </div>
 
   <script>
-    // Tabs (no dependencies)
     (function(){
       const btns = Array.from(document.querySelectorAll('.tabbtn'));
       const panes = Array.from(document.querySelectorAll('.tabpane'));
@@ -998,7 +995,6 @@
       });
     })();
 
-    // Auto-submit filter on change
     (function(){
       const beachSelect = document.getElementById('beach_id');
       const form = document.getElementById('filterForm');
@@ -1007,7 +1003,6 @@
       }
     })();
 
-    // Client-side search for reports
     (function(){
       const input = document.getElementById('reportSearch');
       const rows = Array.from(document.querySelectorAll('.reportRow'));
@@ -1028,7 +1023,6 @@
   </script>
 </body>
 </html>
-
 
 
 
