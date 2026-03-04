@@ -474,7 +474,6 @@
       line-height: 1.45;
     }
 
-    /* NEW: badge style for tide strength in reports table */
     .badge{
       display:inline-flex;
       align-items:center;
@@ -531,7 +530,6 @@
     }
     .link:hover{ text-decoration: underline; }
 
-    /* Small stat cards */
     .stats{
       display:grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -596,6 +594,7 @@
         <a href="{{ url_for('home') }}">Home</a>
         <a href="{{ url_for('beaches') }}">Beaches</a>
         <a href="{{ url_for('lifeguard') }}">Lifeguard</a>
+        <a href="{{ url_for('swimming_videos') }}">Swimming Videos</a>
 
         <span class="pill" title="Logged in status">
           <span class="dot" aria-hidden="true"></span>
@@ -713,7 +712,6 @@
               <textarea id="notes" name="notes" rows="3" maxlength="255" placeholder="Optional: hazards, visibility, currents, closures..."></textarea>
             </div>
 
-            <!-- hidden fields to send advisory + tide strength into create_report() -->
             <input type="hidden" id="advisory_level" name="advisory_level" value="">
             <input type="hidden" id="tide_strength" name="tide_strength" value="">
 
@@ -794,7 +792,6 @@
               {% if api_data.tide_basis %}
                 <div class="muted" style="font-size:12px;">Tide basis: {{ api_data.tide_basis }}</div>
               {% endif %}
-
               {% if api_data.time %}
                 <div class="muted" style="font-size:12px;">API time: {{ api_data.time }}</div>
               {% endif %}
@@ -862,7 +859,7 @@
             <div class="assist">
               <h3>API Assist</h3>
               <p class="muted" style="margin:0;">
-                Load API data for a beach to enable “Use Suggested Values”.
+                Load API data for a beach to enable "Use Suggested Values".
               </p>
             </div>
           {% endif %}
@@ -939,7 +936,6 @@
           </thead>
           <tbody>
             {% for r in reports %}
-              {# Extract tide strength from notes (Option A stores: [TIDE STRENGTH: Weak]) #}
               {% set tide_strength_val = "" %}
               {% if r.notes and "[TIDE STRENGTH:" in r.notes %}
                 {% set _after = r.notes.split("[TIDE STRENGTH:", 1)[1] %}
@@ -998,13 +994,13 @@
           <a href="{{ url_for('home') }}">Home</a>
           <a href="{{ url_for('beaches') }}">Beaches</a>
           <a href="{{ url_for('lifeguard') }}">Lifeguard</a>
+          <a href="{{ url_for('swimming_videos') }}">Swimming Videos</a>
         </div>
       </div>
     </footer>
 
   </main>
 
-  <!-- JS: copy API values into existing form fields -->
   <script>
     (function () {
       const assist = document.getElementById("apiAssist");
@@ -1013,7 +1009,6 @@
       const btnUseApi = document.getElementById("btnUseApi");
       const btnCopyNotes = document.getElementById("btnCopyNotes");
 
-      // Tide assist UI hooks (form-side)
       const tideAssistBox = document.getElementById("tideAssist");
       const tideTags = document.getElementById("tideTags");
 
@@ -1030,18 +1025,10 @@
       function setTideDropdown(state) {
         const tideSelect = document.getElementById("tide");
         if (!tideSelect) return;
-
         const s = (state || "").toLowerCase().trim();
-        const mapping = {
-          "rising": "Rising",
-          "falling": "Falling",
-          "high": "High",
-          "low": "Low"
-        };
-
+        const mapping = { "rising": "Rising", "falling": "Falling", "high": "High", "low": "Low" };
         const v = mapping[s];
         if (!v) return;
-
         tideSelect.value = v;
         tideSelect.dispatchEvent(new Event("input", { bubbles: true }));
         tideSelect.dispatchEvent(new Event("change", { bubbles: true }));
@@ -1049,53 +1036,37 @@
 
       function showTideAssistUI(state, strength, basis) {
         if (!tideAssistBox || !tideTags) return;
-
         const st = norm(state);
         const sp = norm(strength);
         const bs = norm(basis);
-
         if (!st && !sp && !bs) {
           tideAssistBox.style.display = "none";
           tideTags.innerHTML = "";
           return;
         }
-
         const tags = [];
-
-        if (st) {
-          tags.push(`<span class="tag"><strong>Tide</strong> ${st}</span>`);
-        }
+        if (st) tags.push(`<span class="tag"><strong>Tide</strong> ${st}</span>`);
         if (sp) {
           const cls = classifyStrength(sp);
           tags.push(`<span class="tag ${cls}"><strong>Strength</strong> ${sp}</span>`);
         }
-        if (bs) {
-          tags.push(`<span class="tag"><strong>Basis</strong> ${bs}</span>`);
-        }
-
+        if (bs) tags.push(`<span class="tag"><strong>Basis</strong> ${bs}</span>`);
         tideTags.innerHTML = tags.join("");
         tideAssistBox.style.display = "block";
       }
 
-      /* NEW: shorter API summary to avoid notes hitting 255 chars
-         (still informative, but not massive) */
       function buildApiSummary() {
         const d = assist.dataset;
         const parts = [];
-
-        // Tide (short)
         if (d.tideState || d.tideStrength) {
           const t = [];
           if (d.tideState) t.push(d.tideState);
           if (d.tideStrength) t.push(d.tideStrength);
           parts.push(`Tide: ${t.join(" / ")}`);
         }
-
-        // Wave + wind essentials only
         if (d.waveHeight) parts.push(`Wave: ${Number(d.waveHeight).toFixed(1)}m`);
         if (d.windSpeed) parts.push(`Wind: ${Number(d.windSpeed).toFixed(1)}m/s`);
         if (d.waterTemp) parts.push(`Temp: ${Number(d.waterTemp).toFixed(1)}°C`);
-
         if (parts.length === 0) return "";
         return `API — ${parts.join(" | ")}`;
       }
@@ -1111,17 +1082,12 @@
 
       function useSuggestedValues() {
         const d = assist.dataset;
-
         if (d.selectedBeachId) setValueById("beach_id", d.selectedBeachId);
         if (d.waterTemp) setValueById("temp_c", Number(d.waterTemp).toFixed(1));
         if (d.advisoryLevel) setValueById("advisory_level", d.advisoryLevel);
-
-        // push tide strength into hidden field so it saves in report
         if (d.tideStrength) setValueById("tide_strength", d.tideStrength);
-
         if (d.tideState) setTideDropdown(d.tideState);
         showTideAssistUI(d.tideState, d.tideStrength, d.tideBasis);
-
         const notesEl = document.getElementById("notes");
         const summary = buildApiSummary();
         if (notesEl && summary) {
@@ -1134,29 +1100,21 @@
 
       function copyApiSummaryOnly() {
         const d = assist.dataset;
-
         showTideAssistUI(d.tideState, d.tideStrength, d.tideBasis);
-
         const notesEl = document.getElementById("notes");
         const summary = buildApiSummary();
         if (!notesEl || !summary) return;
-
         const current = (notesEl.value || "").trim();
         if (!current) notesEl.value = summary;
         else if (!current.includes("API —")) notesEl.value = current + "\n" + summary;
-
         notesEl.dispatchEvent(new Event("input", { bubbles: true }));
         notesEl.dispatchEvent(new Event("change", { bubbles: true }));
-
         try { navigator.clipboard && navigator.clipboard.writeText(summary); } catch (e) {}
       }
 
-      // On page load: if API already contains tide values, show the panel immediately
       (function initTideAssistFromDataset(){
         const d = assist.dataset;
         showTideAssistUI(d.tideState, d.tideStrength, d.tideBasis);
-
-        // keep hidden tide_strength in sync (even before you click buttons)
         if (d.tideStrength) setValueById("tide_strength", d.tideStrength);
       })();
 
@@ -1167,6 +1125,5 @@
 
 </body>
 </html>
-
 
 
